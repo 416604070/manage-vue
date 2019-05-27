@@ -1,0 +1,593 @@
+<template>
+    <div>
+        <div>
+            <el-button style="margin-top: 2vh;" type="primary" size="small"
+                       @click="openOrCloseDictionaryWindow(true)" v-if="pagePermission.SystemDictionarySave">新增
+            </el-button>
+            <el-button style="margin-top: 2vh;" type="primary" size="small"
+                       @click="goBack()">返回上一级
+            </el-button>
+        </div>
+        <div style="margin: 2vh 0vw 2vh 1.5vw;">
+            <el-breadcrumb separator-class="el-icon-arrow-right">
+                <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
+                    <el-button type="text" @click="changParentDictionary(item, index)">{{item.name}}</el-button>
+                </el-breadcrumb-item>
+            </el-breadcrumb>
+        </div>
+        <div>
+            <div>
+                <el-table :data="dictionaryList" :border="true" style="width: 100%" row-key="id" :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                    <el-table-column label="编号" align="center" width="70">
+                        <template scope="scope">
+                            <span v-text="scope.$index+1"></span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="name" label="名称" align="center" width="200">
+                        <template scope="scope">
+                            <el-button type="text" @click="clickDictionary(scope.row)">{{scope.row.name}}</el-button>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="key" label="key" align="center"></el-table-column>
+                    <el-table-column prop="value" label="value" align="center" width="100"
+                                     :formatter="formatString"></el-table-column>
+                    <el-table-column prop="displayOrder" label="排序码" align="center" width="80"></el-table-column>
+                    <el-table-column prop="createTime" label="创建时间" align="center" :formatter="formatDate"
+                                     width="180"></el-table-column>
+                    <el-table-column prop="createName" label="创建人" align="center" :formatter="formatString"
+                                     width="130"></el-table-column>
+                    <el-table-column prop="updateTime" label="修改时间" align="center" :formatter="formatDate"
+                                     width="180"></el-table-column>
+                    <el-table-column prop="updateName" label="修改人" align="center" :formatter="formatString"
+                                     width="130"></el-table-column>
+                    <el-table-column prop="status" label="状态" align="center" width="80">
+                        <template slot-scope="scope">
+                            <el-switch
+                                v-model="scope.row.status"
+                                active-color="#13ce66"
+                                inactive-color="#ff4949"
+                                :disabled="!pagePermission.SystemDictionaryUpdateStatus"
+                                @change="updateDictionaryStatus(scope.row)">
+                            </el-switch>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" align="center" width="150">
+                        <template slot-scope="scope">
+                            <el-button type="primary" size="mini" :disabled="!pagePermission.SystemDictionaryUpdate"
+                                       @click="openOrCloseDictionaryWindow(true, scope.row)">
+                                编辑
+                            </el-button>
+                            <el-button type="danger" size="mini" :disabled="!pagePermission.SystemDictionaryDelete"
+                                       @click="deleteDictionary(scope.row.id)">删除
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+            <div>
+                <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
+                    <el-pagination
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[5, 10, 20, 50]"
+                        :page-size="pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="total">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 表单 -->
+        <el-dialog :title="dictionaryForm.dictionaryFormTitle" :visible.sync="dictionaryForm.openOrClose" width="60%"
+                   top="10vh">
+            <el-form :model="dictionaryForm" :rules="dictionaryFormRules" ref="dictionaryForm">
+                <el-form-item label="名称" prop="name">
+                    <el-input type="text" v-model="dictionaryForm.name" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="key" prop="key">
+                    <el-input type="text" v-model="dictionaryForm.key" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="value" prop="value">
+                    <el-input type="text" v-model="dictionaryForm.value" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="排序码" prop="displayOrder">
+                    <el-input type="text" v-model="dictionaryForm.displayOrder" auto-complete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click.native="openOrCloseDictionaryWindow(false)">取消</el-button>
+                <el-button type="primary" @click="submitDictionaryForm()">提交</el-button>
+            </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+    export default {
+        name: "dictionary",
+        data() {
+            let _this = this;
+            /**
+             * @Description : 检测数据字典名称
+             * @Author : cheng fei
+             * @CreateDate 2019/4/10 23:49
+             * @Param
+             */
+            let validateName = function (rule, value, callback) {
+                if (_this.$StringUtil.isNotBlank(value)) {
+                    _this.$Http.doPostCheckParam(
+                        _this,
+                        "system/dictionary/check/name",
+                        {
+                            id: _this.dictionaryForm.id,
+                            parentId: _this.dictionaryForm.parentId,
+                            name: _this.dictionaryForm.name
+                        },
+                        function (self, data) {
+                            if (data.data) {
+                                callback()
+                            } else {
+                                callback("[ " + value + " ]数据字典已存在!")
+                            }
+                        }
+                    )
+                } else {
+                    callback("请输入数据字典名称!")
+                }
+            };
+            /**
+             * @Description : 检测数据字典key
+             * @Author : cheng fei
+             * @CreateDate 2019/4/10 23:55
+             * @Param
+             */
+            let validateKey = function (rule, value, callback) {
+                if (_this.$StringUtil.isNotBlank(value)) {
+                    _this.$Http.doPostCheckParam(
+                        _this,
+                        "system/dictionary/check/key",
+                        {
+                            id: _this.dictionaryForm.id,
+                            key: _this.dictionaryForm.key
+                        },
+                        function (self, data) {
+                            if (data.data) {
+                                callback()
+                            } else {
+                                callback("key[ " + value + " ]已存在!")
+                            }
+                        }
+                    )
+                } else {
+                    callback("请输入key!")
+                }
+            };
+            /**
+             * @Description : 检测数据字典value
+             * @Author : cheng fei
+             * @CreateDate 2019/4/10 23:55
+             * @Param
+             */
+            let validateValue = function (rule, value, callback) {
+                if (_this.$StringUtil.isNotBlank(value)) {
+                    _this.$Http.doPostCheckParam(
+                        _this,
+                        "system/dictionary/check/value",
+                        {
+                            id: _this.dictionaryForm.id,
+                            parentId: _this.dictionaryForm.parentId,
+                            value: _this.dictionaryForm.value
+                        },
+                        function (self, data) {
+                            if (data.data) {
+                                callback()
+                            } else {
+                                callback("value[ " + value + " ]已存在!")
+                            }
+                        }
+                    )
+                } else {
+                    callback()
+                }
+            };
+            /**
+             * @Description : 检测排序码
+             * @Author : cheng fei
+             * @CreateDate 2019/4/11 0:00
+             * @Param
+             */
+            let validateDisplayOrder = function (rule, value, callback) {
+                if (_this.$StringUtil.isNotBlank(value)) {
+                    var re = /^[0-9]+$/;
+                    if (re.test(value)) {
+                        callback()
+                    } else {
+                        callback("排序码必须为正整数!")
+                    }
+                } else {
+                    callback("排序码不能为空!")
+                }
+            };
+            return {
+                //页面按钮权限(权限url首字母大写,否则不能动态修改)
+                pagePermission: {
+                    SystemDictionaryList: false,
+                    SystemDictionarySave: false,
+                    SystemDictionaryUpdate: false,
+                    SystemDictionaryUpdateStatus: false,
+                    SystemDictionaryDelete: false
+                },
+                //数据字典列表
+                dictionaryList: [],
+                //数据字典总数
+                total: 0,
+                //当前选中页码
+                currentPage: 1,
+                //每页加载条数
+                pageSize: 10,
+                //道行面包屑数据
+                breadcrumbList: [
+                    {
+                        id: 0,
+                        name: "顶级",
+                    }
+                ],
+                //当前选中的数据字典
+                selectDictionary: "",
+
+                //数据字典表单数据
+                dictionaryForm: {
+                    //表单标题
+                    dictionaryFormTitle: "",
+                    //表单是否打开
+                    openOrClose: false,
+                    //id
+                    id: "",
+                    //父级ID
+                    parentId: 0,
+                    //名称
+                    name: "",
+                    //key
+                    key: "",
+                    //value
+                    value: "",
+                    //排序码
+                    displayOrder: "",
+                    //修改时间
+                    updateTime: "",
+                },
+                //表单验证
+                dictionaryFormRules: {
+                    name: [
+                        {required: true, message: "数据字典名称不能为空!", trigger: "blur"},
+                        {validator: validateName}
+                    ],
+                    key: [
+                        {required: true, message: "数据字典key不能为空!", trigger: "blur"},
+                        {validator: validateKey}
+                    ],
+                    value: [
+                        {validator: validateValue}
+                    ],
+                    displayOrder: [
+                        {required: true, message: "排序码不能为空!", trigger: "blur"},
+                        {validator: validateDisplayOrder}
+                    ]
+                }
+            }
+        },
+        computed: {
+            //数据为空时描述
+            emptyText() {
+                if (this.pagePermission.SystemDictionaryList) {
+                    return "暂无数据"
+                } else {
+                    return "您无查看权限！"
+                }
+            },
+        },
+        async mounted() {
+            //加载页面按钮权限
+            await this.$GetAccountMenuPermission(this.pagePermission);
+            //加载数据字典列表
+            this.loadDictionaryList()
+        },
+        /**
+         * @Description : 加载数据字典列表
+         * @Author : cheng fei
+         * @CreateDate 2019/4/15 23:11
+         */
+        methods: {
+            /**
+             * @Description : 加载数据字典列表
+             * @Author : cheng fei
+             * @CreateDate 2019/4/15 23:22
+             * @Param
+             */
+            loadDictionaryList() {
+                if (this.pagePermission.SystemDictionaryList) {
+                    let url = "system/dictionary/list";
+                    let params = {
+                        parentId: this.$ObjectUtil.isBlank(this.selectDictionary) ? 0 : this.selectDictionary.id,
+                        page: this.currentPage,
+                        pageSize: this.pageSize
+                    };
+                    this.$Http.doPostForForm(
+                        this,
+                        url,
+                        params,
+                        function (self, data) {
+                            self.dictionaryList = data.data.rows;
+                            self.total = data.data.count;
+                        }
+                    )
+                }
+            },
+            /**
+             * @Description : 修改每页加载条数
+             * @Author : cheng fei
+             * @CreateDate 2019/4/15 23:29
+             * @Param pageSize 每页加载条数
+             */
+            handleSizeChange(pageSize) {
+                this.pageSize = pageSize;
+                this.loadDictionaryList();
+            },
+            /**
+             * @Description : 修改加载页码
+             * @Author : cheng fei
+             * @CreateDate 2019/4/15 23:32
+             * @Param page 页码
+             */
+            handleCurrentChange(page) {
+                this.currentPage = page;
+                this.loadDictionaryList();
+            },
+            /**
+             * @Description :
+             * @Author : cheng fei
+             * @CreateDate 2019/4/15 23:56
+             * @Param
+             */
+            changParentDictionary(parentDictionary, index) {
+                this.selectDictionary = parentDictionary;
+                this.breadcrumbList.splice(index + 1, this.breadcrumbList.length - index - 1);
+                //刷新数据
+                this.loadDictionaryList();
+
+            },
+            /**
+             * @Description : 点击数据字典
+             * @Author : cheng fei
+             * @CreateDate 2019/4/16 0:02
+             * @Param dictionary 数据字典数据
+             */
+            clickDictionary(dictionary) {
+                this.selectDictionary = {
+                    id: dictionary.id,
+                    name: dictionary.name,
+                };
+                this.breadcrumbList.push(this.selectDictionary);
+                //刷新数据
+                this.loadDictionaryList()
+            },
+            /**
+             * @Description : 返回上一级
+             * @Author : cheng fei
+             * @CreateDate 2019/4/16 0:26
+             */
+            goBack() {
+                if (this.breadcrumbList.length === 1) {
+                    return
+                }
+                this.selectDictionary = this.breadcrumbList[this.breadcrumbList.length - 2];
+                this.breadcrumbList.splice(this.breadcrumbList.length - 1, 1);
+                this.loadDictionaryList();
+            },
+            /**
+             * @Description : 修改数据字典状态
+             * @Author : cheng fei
+             * @CreateDate 2019/4/16 1:14
+             * @Param dictionary 数据字典数据
+             */
+            updateDictionaryStatus(dictionary) {
+                let flag = true;
+                if (!dictionary.status) {
+                    this.$confirm('确认要禁用该数据字典,禁用后该数据字典以及其子数据字典都不可用?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }).then(() => {
+                        flag = true
+                    }).catch(() => {
+                        flag = false;
+                        dictionary.status = !dictionary.status
+                    })
+                }
+                if (flag) {
+                    let params = {
+                        id: dictionary.id,
+                        status: dictionary.status,
+                        updateTime: this.$StringUtil.isBlank(dictionary.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(dictionary.updateTime)
+                    };
+                    this.$Http.doPostForForm(
+                        this,
+                        "system/dictionary/update/status",
+                        params,
+                        function (self, data) {
+                            self.loadDictionaryList();
+                        },
+                        function (self) {
+                            self.loadDictionaryList();
+                        }
+                    )
+                }
+            },
+            /**
+             * @Description : 删除数据字典
+             * @Author : cheng fei
+             * @CreateDate 2019/4/16 1:03
+             * @Param 数据字典id
+             */
+            deleteDictionary(id) {
+                this.$confirm('确认要删除该数据字典?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning',
+                }).then(() => {
+                    this.$Http.doPostForForm(
+                        this,
+                        "system/dictionary/delete",
+                        {
+                            id: id
+                        },
+                        function (self, data) {
+                            self.$message({
+                                type: 'success',
+                                message: '删除数据字典成功!'
+                            });
+                            //刷新数据
+                            self.loadDictionaryList();
+                        }
+                    )
+                }).catch(() => {
+                });
+            },
+            /**
+             * @Description : 开启数据字典新增/编辑窗口
+             * @Author : cheng fei
+             * @CreateDate 2019/4/12 1:01
+             * @Param flag 开启/关闭
+             * @Param data 修改数据回显
+             */
+            openOrCloseDictionaryWindow(flag, data) {
+                this.dictionaryForm.openOrClose = flag;
+                if (flag) {
+                    //开启数据字典编辑窗口
+                    if (this.dictionaryForm.id === "" && this.$ObjectUtil.isBlank(data)) {
+                        //添加
+                        this.dictionaryForm.dictionaryFormTitle = "添加数据字典"
+                    } else {
+                        this.dictionaryForm.dictionaryFormTitle = "修改数据字典";
+                        //设置回显
+                        this.dictionaryForm.id = data.id;
+                        this.dictionaryForm.name = data.name;
+                        this.dictionaryForm.key = data.key;
+                        this.dictionaryForm.value = this.$StringUtil.isBlank(data.value) ? "" : data.value;
+                        this.dictionaryForm.displayOrder = data.displayOrder;
+                        this.dictionaryForm.updateTime = data.updateTime;
+                    }
+                } else {
+                    //关闭数据字典编辑窗口
+                    //重置数据
+                    this.dictionaryForm = {
+                        //表单标题
+                        dictionaryFormTitle: "",
+                        //表单是否打开
+                        openOrClose: false,
+                        //id
+                        id: "",
+                        //父级ID
+                        parentId: 0,
+                        //名称
+                        name: "",
+                        //key
+                        key: "",
+                        //value
+                        value: "",
+                        //排序码
+                        displayOrder: "",
+                        //修改时间
+                        updateTime: "",
+                    };
+                    //重置验证
+                    this.$refs["dictionaryForm"].resetFields();
+                }
+            },
+            /**
+             * @Description : 提交表单
+             * @Author : cheng fei
+             * @CreateDate 2019/4/12 1:03
+             */
+            submitDictionaryForm() {
+                this.$refs["dictionaryForm"].validate(valid => {
+                    if (valid) {
+                        let params = {
+                            parentId: this.$ObjectUtil.isBlank(this.selectDictionary) ? 0 : this.selectDictionary.id,
+                            name: this.dictionaryForm.name,
+                            key: this.dictionaryForm.key,
+                            value: this.dictionaryForm.value,
+                            displayOrder: this.dictionaryForm.displayOrder
+                        };
+
+                        let url = "";
+                        if (this.dictionaryForm.id === "") {
+                            url = "system/dictionary/save";
+                        } else {
+                            url = "system/dictionary/update";
+                            params.id = this.dictionaryForm.id;
+                            params.updateTime = this.$StringUtil.isBlank(this.dictionaryForm.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(this.dictionaryForm.updateTime);
+                        }
+
+                        this.$Http.doPostForForm(
+                            this,
+                            url,
+                            params,
+                            function (self, data) {
+                                self.$message({
+                                    type: 'success',
+                                    message: self.dictionaryForm.id === "" ? '新增数据字典成功!' : '修改数据字典成功!'
+                                });
+                                self.openOrCloseDictionaryWindow(false);
+                                self.loadDictionaryList();
+                            }
+                        )
+                    }
+                });
+            },
+            /**
+             * @Description : 格式化字符串
+             * @Author : cheng fei
+             * @CreateDate 2019/3/30 1:39
+             * @Param
+             */
+            formatString(row, column) {
+                let value = row;
+                if (column.property.indexOf(".") !== -1) {
+                    let propertys = column.property.split(".");
+                    for (let i in propertys) {
+                        value = value[propertys[i]]
+                    }
+                } else {
+                    value = row[column.property]
+                }
+                return this.$StringUtil.formatToString(value);
+            },
+            /**
+             * @Description : 格式化日期
+             * @Author : cheng fei
+             * @CreateDate 2019/3/30 1:39
+             * @Param
+             */
+            formatDate(row, column) {
+                let value = row;
+                if (column.property.indexOf(".") !== -1) {
+                    let propertys = column.property.split(".")
+                    for (let i in propertys) {
+                        value = value[propertys[i]]
+                    }
+                } else {
+                    value = row[column.property]
+                }
+                return this.$DateUtil.formatDateTimeForTimestamp(value);
+            },
+        }
+    }
+</script>
+
+<style scoped>
+
+</style>
