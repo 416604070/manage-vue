@@ -521,41 +521,52 @@
                 })
             },
             /**
+             * @Description : 执行修改菜单状态
+             * @Author : cheng fei
+             * @CreateDate 2019/5/28 15:57
+             * @Param menu 菜单
+             */
+            doUpdateMenuStatus(menu){
+                this.$Http.doPostForForm(
+                    this,
+                    "system/menu/update/status",
+                    {
+                        id: menu.id,
+                        status: menu.status,
+                        updateTime: this.$StringUtil.isBlank(menu.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(menu.updateTime)
+                    },
+                    function (self, data) {
+                        self.loadMenuList();
+                        self.$message({
+                            type: 'success',
+                            message: menu.status ? '启用菜单成功！' : '禁用菜单成功！'
+                        });
+                    },
+                    function (self) {
+                        self.loadMenuList();
+                    }
+                )
+            },
+            /**
              * @Description : 删除菜单
              * @Author : cheng fei
              * @CreateDate 2019/4/1 1:27
-             * @Param id 菜单ID
+             * @Param menu 菜单
              */
             updateMenuStatus(menu) {
-                let flag = true;
-                this.$confirm('确认要禁用该菜单,禁用后该菜单以及其子菜单都不可用？', '提示', {
-                    confirmButtonText: '确定',
-                    cancelButtonText: '取消',
-                    type: 'warning',
-                }).then(() => {
-                    flag = true
-                }).catch(() => {
-                    flag = false;
-                    menu.status = !menu.status
-                });
-                if (flag) {
-                    this.$Http.doPostForForm(
-                        this,
-                        "system/menu/update/status",
-                        {
-                            id: menu.id,
-                            status: menu.status,
-                            updateTime: this.$StringUtil.isBlank(menu.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(menu.updateTime)
-                        },
-                        function (self, data) {
-                            self.loadMenuList();
-                        },
-                        function (self) {
-                            self.loadMenuList();
-                        }
-                    )
+                if (menu.status) {
+                    this.doUpdateMenuStatus(menu)
+                } else {
+                    this.$confirm('确认要禁用该菜单,禁用后该菜单以及其子菜单都不可用？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }).then(() => {
+                        this.doUpdateMenuStatus(menu)
+                    }).catch(() => {
+                        menu.status = !menu.status
+                    });
                 }
-
             },
             /**
              * @Description : 删除菜单

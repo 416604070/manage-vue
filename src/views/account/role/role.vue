@@ -47,7 +47,7 @@
                                 active-color="#13ce66"
                                 inactive-color="#ff4949"
                                 :disabled='!pagePermission.AccountRoleUpdateStatus'
-                                @change="updateMenuStatus(scope.row)">
+                                @change="updateRoleStatus(scope.row)">
                             </el-switch>
                         </template>
                     </el-table-column>
@@ -395,6 +395,55 @@
                         )
                     }
                 })
+            },
+            /**
+             * @Description : 执行修改角色状态
+             * @Author : cheng fei
+             * @CreateDate 2019/5/28 16:53
+             * @Param role 角色
+             */
+            doUpdateRoleStatus(role){
+                this.$Http.doPostForForm(
+                    this,
+                    "account/role/update/status",
+                    {
+                        id: role.id,
+                        status: role.status,
+                        updateTime: this.$DateUtil.formatTimestampForDateTime(role.updateTime)
+                    },
+                    function (self, data) {
+                        self.$message({
+                            type: 'success',
+                            message: role.status ? '启用角色成功！' : '禁用角色成功！'
+                        });
+                        self.loadRoleList();
+                    },
+                    function (self) {
+                        self.loadRoleList();
+
+                    }
+                )
+            },
+            /**
+             * @Description :
+             * @Author : cheng fei
+             * @CreateDate 2019/5/28 16:55
+             * @Param role 角色
+             */
+            updateRoleStatus(role) {
+                if (role.status) {
+                    this.doUpdateRoleStatus(role);
+                }else {
+                    this.$confirm('确认要禁用该角色？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }).then(() => {
+                        this.doUpdateRoleStatus(role);
+                    }).catch(() => {
+                        role.status = !role.status
+                    });
+                }
             },
             /**
              * @Description : 删除角色

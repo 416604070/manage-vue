@@ -388,42 +388,53 @@
                 this.loadDictionaryList();
             },
             /**
+             * @Description : 执行修改数据字典
+             * @Author : cheng fei
+             * @CreateDate 2019/5/28 17:27
+             * @Param  dictionary 数据字典数据
+             */
+            doUpdateDictionaryStatus (dictionary) {
+                let params = {
+                    id: dictionary.id,
+                    status: dictionary.status,
+                    updateTime: this.$StringUtil.isBlank(dictionary.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(dictionary.updateTime)
+                };
+                this.$Http.doPostForForm(
+                    this,
+                    "system/dictionary/update/status",
+                    params,
+                    function (self, data) {
+                        self.loadDictionaryList();
+                        self.$message({
+                            type: 'success',
+                            message: dictionary.status ? '启用数据字典成功！' : '禁用数据字典成功！'
+                        });
+                    },
+                    function (self) {
+                        self.loadDictionaryList();
+                    }
+                )
+            },
+            /**
              * @Description : 修改数据字典状态
              * @Author : cheng fei
              * @CreateDate 2019/4/16 1:14
              * @Param dictionary 数据字典数据
              */
             updateDictionaryStatus(dictionary) {
-                let flag = true;
-                if (!dictionary.status) {
+                if (dictionary.status) {
+                    this.doUpdateDictionaryStatus(dictionary)
+                } else {
                     this.$confirm('确认要禁用该数据字典,禁用后该数据字典以及其子数据字典都不可用?', '提示', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
                         type: 'warning',
                     }).then(() => {
-                        flag = true
+                        this.doUpdateDictionaryStatus(dictionary)
                     }).catch(() => {
-                        flag = false;
                         dictionary.status = !dictionary.status
                     })
-                }
-                if (flag) {
-                    let params = {
-                        id: dictionary.id,
-                        status: dictionary.status,
-                        updateTime: this.$StringUtil.isBlank(dictionary.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(dictionary.updateTime)
-                    };
-                    this.$Http.doPostForForm(
-                        this,
-                        "system/dictionary/update/status",
-                        params,
-                        function (self, data) {
-                            self.loadDictionaryList();
-                        },
-                        function (self) {
-                            self.loadDictionaryList();
-                        }
-                    )
+
                 }
             },
             /**

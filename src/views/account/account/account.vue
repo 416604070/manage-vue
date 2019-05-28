@@ -868,11 +868,12 @@
                 })
             },
             /**
-             * @Description : 修改账号状态
+             * @Description :
              * @Author : cheng fei
-             * @CreateDate 2019/5/4 13:15
+             * @CreateDate 2019/5/28 15:48
+             * @Param account 账号详情
              */
-            updateAccountStatus(account) {
+            doUpdateAccountStatus(account){
                 this.$Http.doPostForForm(
                     this,
                     "account/account/update/status",
@@ -884,7 +885,7 @@
                     function (self, data) {
                         self.$message({
                             type: 'success',
-                            message: account.status ? '启用账号成功！' : '禁用账号成功!'
+                            message: account.status ? '启用账号成功！' : '禁用账号成功！'
                         });
                         self.loadAccountList();
                     },
@@ -893,6 +894,26 @@
 
                     }
                 )
+            },
+            /**
+             * @Description : 修改账号状态
+             * @Author : cheng fei
+             * @CreateDate 2019/5/4 13:15
+             */
+            updateAccountStatus(account) {
+                if (account.status) {
+                    this.doUpdateAccountStatus(account);
+                }else {
+                    this.$confirm('确认要禁用该账号？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }).then(() => {
+                        this.doUpdateAccountStatus(account);
+                    }).catch(() => {
+                        account.status = !account.status
+                    });
+                }
             },
             /**
              * @Description : 删除账号

@@ -276,7 +276,6 @@ function checkResponseData(data, showErrorMSg, redirect) {
         return false;
     } else if (data.status !== 200) {
         if (data.code === 10200){
-            console.log("data.code === 10200");
             if (isAlertLoginOverTime()) {
                 let token = getToken();
                 if (!token) {
@@ -287,7 +286,7 @@ function checkResponseData(data, showErrorMSg, redirect) {
                 gotoLogin(redirect);
             }
             return false;
-        } else if (data.code === 10201 || data.code === 10202 || data.code === 10203) {
+        } else if (data.code === 10201 || data.code === 10202 || data.code === 10203 || data.code === 10204) {
             if (isAlertLoginOverTime()) {
                 errorMsg(data.msg);
                 gotoLogin(redirect);

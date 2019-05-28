@@ -513,41 +513,51 @@
                 })
             },
             /**
+             * @Description : 执行修改权限状态
+             * @Author : cheng fei
+             * @CreateDate 2019/5/28 17:25
+             * @Param  permission 权限
+             */
+            doUpdatePermissionStatus (permission) {
+                this.$Http.doPostForForm(
+                    this,
+                    "system/permission/update/status",
+                    {
+                        id: permission.id,
+                        status: permission.status,
+                        updateTime: this.$StringUtil.isBlank(permission.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(permission.updateTime)
+                    },
+                    function (self, data) {
+                        self.loadPermissionList();
+                        self.$message({
+                            type: 'success',
+                            message: permission.status ? '启用权限成功！' : '禁用权限成功！'
+                        });
+                    },
+                    function (self) {
+                        self.loadPermissionList();
+                    }
+                )
+            },
+            /**
              * @Description : 修改权限状态
              * @Author : cheng fei
              * @CreateDate 2019/4/1 1:27
-             * @Param id 菜单ID
+             * @Param permission 权限
              */
             updatePermissionStatus(permission) {
-                let flag = true;
-                if (!permission.status) {
+                if (permission.status) {
+                    this.doUpdatePermissionStatus(permission)
+                } else {
                     this.$confirm('确认要禁用该权限,禁用后相关页面改功能不可用?', '提示', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
                         type: 'warning',
                     }).then(() => {
-                        flag = true
+                        this.doUpdatePermissionStatus(permission)
                     }).catch(() => {
-                        flag = false;
                         permission.status = !permission.status
                     });
-                }
-                if (flag) {
-                    this.$Http.doPostForForm(
-                        this,
-                        "system/permission/update/status",
-                        {
-                            id: permission.id,
-                            status: permission.status,
-                            updateTime: this.$StringUtil.isBlank(permission.updateTime) ? "" : this.$DateUtil.formatTimestampForDateTime(permission.updateTime)
-                        },
-                        function (self, data) {
-                           self.loadPermissionList();
-                        },
-                        function () {
-                            self.loadPermissionList();
-                        }
-                    )
                 }
             },
             /**
