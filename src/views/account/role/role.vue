@@ -1,91 +1,211 @@
 <template>
     <div>
-        <div class="header-item border-r">
-            <div class="header-top t-h2">
-                <span style="color: #000000;font-size: 2vh;">筛选条件</span>
+        <!-- 移动端 -->
+        <div v-if="!isPc">
+            <el-collapse v-model="activeName" accordion>
+                <!-- 筛选条件 -->
+                <el-collapse-item name="1">
+                    <template slot="title">
+                        <span style="padding-left: 5px;font-size: 2vh;">数据筛选</span>
+                    </template>
+                    <el-form label-position="left" inline class="demo-table-expand" style="margin-left: 7vw">
+                        <el-form-item label="角色名：" size="mini">
+                            <el-input v-model="name" placeholder="请输入用户名" clearable></el-input>
+                        </el-form-item>
+                        <el-form-item label="每页显示记录数：" size="mini">
+                            <el-select v-model="pageSize" placeholder="请选择" style="width: 15vw">
+                                <el-option value="3" label="3"></el-option>
+                                <el-option value="5" label="5"></el-option>
+                                <el-option value="10" label="10"></el-option>
+                                <el-option value="15" label="15"></el-option>
+                                <el-option value="20" label="20"></el-option>
+                                <el-option value="50" label="50"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-button type="primary" size="small" @click="doSearch()"
+                                   style="margin-left: 1vw;">查询
+                        </el-button>
+                    </el-form>
+                </el-collapse-item>
+
+                <!-- 数据列表 -->
+                <el-collapse-item name="2">
+                    <template slot="title">
+                        <span style="padding-left: 5px;font-size: 2vh">数据列表</span>
+                    </template>
+                    <el-table :data="roleList" :show-header="false" border :border="true"
+                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                        <el-table-column>
+                            <template slot-scope="props">
+                                <el-form label-position="left" inline class="demo-table-expand">
+                                    <el-form-item label="角色名称：" size="mini">
+                                        <span>{{ props.row.name }}</span>
+                                    </el-form-item>
+                                    <p>
+                                        <el-form-item label="状态：">
+                                            <el-switch
+                                                v-model="props.row.status"
+                                                active-color="#13ce66"
+                                                inactive-color="#ff4949"
+                                                :disabled="!pagePermission.AccountRoleUpdateStatus"
+                                                @change="updateAccountStatus(props.row)">
+                                            </el-switch>
+                                        </el-form-item>
+                                    </p>
+                                    <el-collapse-transition>
+                                        <div class="transition-box" v-show="props.row.showMore">
+                                            <el-form-item label="排序码：" size="mini">
+                                                <span>{{ props.row.displayOrder }}</span>
+                                            </el-form-item>
+                                            <p>
+                                                <el-form-item label="创建人：" size="mini">
+                                                    <span>{{ props.row.createName ? props.row.createName : '-' }}</span>
+                                                </el-form-item>
+                                                <el-form-item label="创建时间：" size="mini">
+                                                    <span>{{ props.row.createTime ? $DateUtil.getDateTime(props.row.createTime) : '-' }}</span>
+                                                </el-form-item>
+                                            </p>
+                                            <p>
+                                                <el-form-item label="修改人：" size="mini">
+                                                    <span>{{ props.row.updateName ? props.row.updateName : '-' }}</span>
+                                                </el-form-item>
+                                                <el-form-item label="修改时间：" size="mini">
+                                                    <span>{{ props.row.updateTime ? $DateUtil.getDateTime(props.row.updateTime) : '-' }}</span>
+                                                </el-form-item>
+                                            </p>
+                                            <el-form-item label="备注：" size="mini">
+                                                <span>{{ props.row.remark ? props.row.remark : '-' }}</span>
+                                            </el-form-item>
+                                        </div>
+                                    </el-collapse-transition>
+                                    <p>
+                                        <el-form-item size="mini">
+                                            <el-button type="text" size="small" @click="openOrCloseRoleWindow(true)"
+                                                       v-if="pagePermission.AccountRoleSave"
+                                                       style="margin-left: 1vw;">新增
+                                            </el-button>
+                                            <el-button type="text" size="mini"
+                                                       :disabled="!pagePermission.AccountRolePermissionUpdate"
+                                                       @click="openOrCloseRolePermissionWindow(true, props.row)">
+                                                权限设置
+                                            </el-button>
+                                            <el-button type="text" size="mini"
+                                                       :disabled="!pagePermission.AccountRoleUpdate"
+                                                       @click="openOrCloseRoleWindow(true, props.row)">
+                                                编辑
+                                            </el-button>
+                                            <el-button type="text" size="mini"
+                                                       :disabled="!pagePermission.AccountRoleDelete"
+                                                       @click="deleteRole(props.row.id)">删除
+                                            </el-button>
+                                        </el-form-item>
+                                    </p>
+                                    <div align="center">
+                                        <el-button size="mini" :autofocus="true" plain :icon="props.row.icon"
+                                                   @click="seeMore(props.row)"
+                                                   style="width: 100%; background: #ecf5ff"></el-button>
+                                    </div>
+                                </el-form>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-collapse-item>
+            </el-collapse>
+        </div>
+        <!-- pc -->
+        <div v-else>
+            <div class="header-item border-r">
+                <div class="header-top t-h2">
+                    <span style="color: #000000;font-size: 2vh;">筛选条件</span>
+                </div>
+                <div style="height: 6.5vh;min-height: 51px">
+                    <div class="search_div" style="margin: 1.3vh 1vw">
+                        <span style="color: #000000;font-size: 1.6vh">角色名：</span>
+                        <el-input v-model="name" placeholder="请输入角色名" @change="changName" clearable
+                                  style="width: 10vw"></el-input>
+                    </div>
+                </div>
             </div>
-            <div style="height: 6.5vh;min-height: 51px">
-                <div class="search_div" style="margin: 1.3vh 1vw">
-                    <span style="color: #000000;font-size: 1.6vh">角色名：</span>
-                    <el-input v-model="name" placeholder="请输入角色名" @change="changName" clearable
-                              style="width: 10vw"></el-input>
+            <div class="header-item border-r" style="margin-top: 2vh">
+                <div class="header-top t-h2">
+                    <span style="color: #000000;font-size: 2vh;">数据列表</span>
+                    <div style="float: right;margin-right: 2vw;">
+                        <el-button type="primary" size="small" @click="openOrCloseRoleWindow(true)"
+                                   v-if="pagePermission.AccountRoleSave"
+                                   style="margin-left: 1vw;">新增
+                        </el-button>
+                    </div>
+                </div>
+                <div>
+                    <el-table :data="roleList" :border="true" style="width: 100%" row-key="id"
+                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                        <el-table-column label="编号" align="center" width="80">
+                            <template scope="scope">
+                                <span v-text="scope.$index+1"></span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="name" label="角色名称" align="center" width="120"></el-table-column>
+                        <el-table-column prop="displayOrder" label="排序码" align="center" width="80"></el-table-column>
+                        <el-table-column prop="createTime" label="创建日期" align="center" width="200"
+                                         :formatter="$DateUtil.formatDateByTable"></el-table-column>
+                        <el-table-column prop="createName" label="创建人" align="center" width="150"
+                                         :formatter="$StringUtil.formatToStringByTable"></el-table-column>
+                        <el-table-column prop="updateTime" label="修改日期" align="center" width="200"
+                                         :formatter="$DateUtil.formatDateByTable"></el-table-column>
+                        <el-table-column prop="updateName" label="修改人" align="center" width="200"
+                                         :formatter="$StringUtil.formatToStringByTable"></el-table-column>
+                        <el-table-column prop="status" label="状态" align="center" width="100">
+                            <template slot-scope="scope">
+                                <el-switch
+                                    v-model="scope.row.status"
+                                    active-color="#13ce66"
+                                    inactive-color="#ff4949"
+                                    :disabled='!pagePermission.AccountRoleUpdateStatus'
+                                    @change="updateRoleStatus(scope.row)">
+                                </el-switch>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="remark" label="备注" align="center"
+                                         :formatter="$StringUtil.formatToStringByTable"></el-table-column>
+                        <el-table-column label="操作" align="center" width="250">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="mini"
+                                           :disabled="!pagePermission.AccountRolePermissionUpdate"
+                                           @click="openOrCloseRolePermissionWindow(true, scope.row)">
+                                    权限设置
+                                </el-button>
+                                <el-button type="primary" size="mini" :disabled="!pagePermission.AccountRoleUpdate"
+                                           @click="openOrCloseRoleWindow(true, scope.row)">
+                                    编辑
+                                </el-button>
+                                <el-button type="danger" size="mini" :disabled="!pagePermission.AccountRoleDelete"
+                                           @click="deleteRole(scope.row.id)">删除
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
                 </div>
             </div>
         </div>
-        <div class="header-item border-r" style="margin-top: 2vh">
-            <div class="header-top t-h2">
-                <span style="color: #000000;font-size: 2vh;">数据列表</span>
-                <div style="float: right;margin-right: 2vw;">
-                    <el-button type="primary" size="small" @click="openOrCloseRoleWindow(true)"
-                               v-if="pagePermission.AccountRoleSave"
-                               style="margin-left: 1vw;">新增
-                    </el-button>
-                </div>
-            </div>
-            <div>
-                <el-table :data="roleList" :border="true" style="width: 100%" row-key="id"
-                          :row-class-name="$TableRowClassName" :empty-text="emptyText">
-                    <el-table-column label="编号" align="center" width="80">
-                        <template scope="scope">
-                            <span v-text="scope.$index+1"></span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="name" label="角色名称" align="center" width="120"></el-table-column>
-                    <el-table-column prop="displayOrder" label="排序码" align="center" width="80"></el-table-column>
-                    <el-table-column prop="createTime" label="创建日期" align="center" width="200"
-                                     :formatter="$DateUtil.formatDateByTable"></el-table-column>
-                    <el-table-column prop="createName" label="创建人" align="center" width="150"
-                                     :formatter="$StringUtil.formatToStringByTable"></el-table-column>
-                    <el-table-column prop="updateTime" label="修改日期" align="center" width="200"
-                                     :formatter="$DateUtil.formatDateByTable"></el-table-column>
-                    <el-table-column prop="updateName" label="修改人" align="center" width="200"
-                                     :formatter="$StringUtil.formatToStringByTable"></el-table-column>
-                    <el-table-column prop="status" label="状态" align="center" width="100">
-                        <template slot-scope="scope">
-                            <el-switch
-                                v-model="scope.row.status"
-                                active-color="#13ce66"
-                                inactive-color="#ff4949"
-                                :disabled='!pagePermission.AccountRoleUpdateStatus'
-                                @change="updateRoleStatus(scope.row)">
-                            </el-switch>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="remark" label="备注" align="center"
-                                     :formatter="$StringUtil.formatToStringByTable"></el-table-column>
-                    <el-table-column label="操作" align="center" width="250">
-                        <template slot-scope="scope">
-                            <el-button type="primary" size="mini" :disabled="!pagePermission.AccountRolePermissionUpdate"
-                                       @click="openOrCloseRolePermissionWindow(true, scope.row)">
-                                权限设置
-                            </el-button>
-                            <el-button type="primary" size="mini" :disabled="!pagePermission.AccountRoleUpdate" @click="openOrCloseRoleWindow(true, scope.row)">
-                                编辑
-                            </el-button>
-                            <el-button type="danger" size="mini" :disabled="!pagePermission.AccountRoleDelete" @click="deleteRole(scope.row.id)">删除
-                            </el-button>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-            <div>
-                <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
-                    <el-pagination
-                        @size-change="handleSizeChange"
-                        @current-change="handleCurrentChange"
-                        :current-page="currentPage"
-                        :page-sizes="[5, 10, 20, 50, 100]"
-                        :page-size="pageSize"
-                        :small="isSmallPagination"
-                        :layout="isSmallPagination ? '' : 'total, sizes, prev, pager, next, jumper'"
-                        :total="total">
-                    </el-pagination>
-                </div>
+        <div>
+            <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
+                <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[5, 10, 20, 50, 100]"
+                    :page-size="pageSize"
+                    :small="!isPc"
+                    :layout=" isPc ? 'total, sizes, prev, pager, next, jumper' : ' prev, pager, next'"
+                    :total="total"
+                    prev-text="上一页"
+                    next-text="下一页">
+                </el-pagination>
             </div>
         </div>
 
         <!-- 表单 -->
-        <el-dialog :title="roleForm.roleFormTitle" :visible.sync="roleForm.openOrClose" width="60%" top="10vh">
+        <el-dialog :title="roleForm.roleFormTitle" :visible.sync="roleForm.openOrClose" :width="isPc ? '60%' : '90%'" top="10vh">
             <el-form :model="roleForm" :rules="roleFormRules" ref="roleForm">
                 <el-form-item label="角色名称" prop="name">
                     <el-input type="text" v-model="roleForm.name" auto-complete="off"></el-input>
@@ -104,7 +224,7 @@
         </el-dialog>
 
         <!-- 权限设置 -->
-        <el-dialog :title="menuPermissionWindowTitle" :visible.sync="menuPermissionWindow" width="50%" top="10vh">
+        <el-dialog :title="menuPermissionWindowTitle" :visible.sync="menuPermissionWindow" :width=" isPc ? '50%' : '90%'" :top="isPc ? '10vh' : '2vh'">
             <el-tree ref="menuPermissionTree" :props="menuPermissionTreeProps"
                      :render-content="menuPermissionTreeRenderContent"
                      :data="menuPermissionTreeData" node-key="id" :show-checkbox="true" :default-expand-all="true">
@@ -166,6 +286,10 @@
                 }
             };
             return {
+                //是否是PC端
+                isPc: true,
+                //移动端默认展开
+                activeName: '2',
                 //页面按钮权限(权限url首字母大写,否则不能动态修改)
                 pagePermission: {
                     AccountRoleList: false,
@@ -253,17 +377,11 @@
                     return "您无查看权限！"
                 }
             },
-            //是否显示最小分页
-            isSmallPagination() {
-                let clientWidth = document.body.clientWidth;
-                if (clientWidth < 450) {
-                    return true
-                } else {
-                    return false;
-                }
-            }
         },
         async mounted() {
+            //是否是PC端
+            this.isPc = this.$IsPC();
+            this.pageSize = this.isPc ? 10 : 5;
             //页面按钮权限(权限url首字母大写,否则不能动态修改)
             await this.$GetAccountMenuPermission(this.pagePermission);
             //加载角色列表
@@ -271,6 +389,28 @@
 
         },
         methods: {
+            /**
+             * @Description : 移动端显示更多
+             * @Author : cheng fei
+             * @CreateDate 2019/5/29 23:48
+             * /
+            seeMore(item) {
+                item.showMore = !item.showMore;
+                if (item.showMore) {
+                    item.icon = "el-icon-arrow-up";
+                } else {
+                    item.icon = "el-icon-arrow-down";
+                }
+            },
+             /**
+             * @Description : 移动端数据筛选
+             * @Author : cheng fei
+             * @CreateDate 2019/5/29 23:49
+             * /
+            doSearch() {
+                this.currentPage = 1;
+                this.loadRoleList();
+            },
             /**
              * @Description : 加载角色列表
              * @Author : cheng fei
@@ -289,6 +429,13 @@
                         function (self, data) {
                             self.roleList = data.data.rows;
                             self.total = data.data.count;
+                            if (!self.isPc) {
+                                self.activeName = '2';
+                                self.roleList.forEach((item) => {
+                                    self.$set(item, 'showMore', false)
+                                    self.$set(item, 'icon', 'el-icon-arrow-down')
+                                })
+                            }
                         }
                     )
                 }
@@ -299,6 +446,7 @@
              * @CreateDate 2019/4/27 14:24
              */
             changName() {
+                this.currentPage = 1;
                 this.loadRoleList();
             },
             /**
@@ -402,7 +550,7 @@
              * @CreateDate 2019/5/28 16:53
              * @Param role 角色
              */
-            doUpdateRoleStatus(role){
+            doUpdateRoleStatus(role) {
                 this.$Http.doPostForForm(
                     this,
                     "account/role/update/status",
@@ -433,7 +581,7 @@
             updateRoleStatus(role) {
                 if (role.status) {
                     this.doUpdateRoleStatus(role);
-                }else {
+                } else {
                     this.$confirm('确认要禁用该角色？', '提示', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
