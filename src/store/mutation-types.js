@@ -6,6 +6,7 @@ export const ADD_VISITED_VIEWS = "ADD_VISITED_VIEWS";
 export const DEL_VISITED_VIEWS = "DEL_VISITED_VIEWS";
 export const OPEN_HTTP = "OPEN_HTTP";
 export const CLOSE_HTTP = "CLOSE_HTTP";
+export const IS_PC = "IS_PC";
 
 
 // user（用户）相关

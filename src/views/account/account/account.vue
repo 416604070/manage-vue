@@ -1,156 +1,317 @@
 <template>
-    <div style="min-width: 1220px">
-        <div class="header-item border-r" >
-            <div class="header-top t-h2">
-                <span style="color: #000000;font-size: 2vh;">筛选条件</span>
+    <div>
+        <!-- 数据列表 -->
+        <div>
+            <!-- 移动端 -->
+            <div v-if="!isPc" style="width: 100%">
+                <el-collapse v-model="activeName" accordion>
+                    <!-- 筛选条件 -->
+                    <el-collapse-item name="1">
+                        <template slot="title">
+                            <span style="padding-left: 20px;font-size: 2vh;">数据筛选</span>
+                        </template>
+                        <el-form label-position="left" inline class="demo-table-expand" style="margin-left: 7vw;">
+                            <el-form-item label="用户名：" size="mini">
+                                <el-input v-model="query.username" placeholder="请输入用户名" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="姓名：" size="mini">
+                                <el-input v-model="query.name" placeholder="请输入姓名" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="手机号：" size="mini">
+                                <el-input v-model="query.phone" placeholder="请输入手机号" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="邮箱：" size="mini">
+                                <el-input v-model="query.email" placeholder="请输入邮箱" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="角色：" size="mini">
+                                <el-select v-model="query.roleId" placeholder="请选择">
+                                    <el-option value="" label="全部"></el-option>
+                                    <el-option
+                                        v-for="item in roleCheckboxData"
+                                        :key="item.id"
+                                        :label="item.name"
+                                        :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="每页显示记录数：" size="mini">
+                                <el-select v-model="pageSize" placeholder="请选择" style="width: 15vw">
+                                    <el-option value="3" label="3"></el-option>
+                                    <el-option value="5" label="5"></el-option>
+                                    <el-option value="10" label="10"></el-option>
+                                    <el-option value="15" label="15"></el-option>
+                                    <el-option value="20" label="20"></el-option>
+                                    <el-option value="50" label="50"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-button type="primary" size="small" @click="doSearch()"
+                                       style="margin-left: 1vw;">查询
+                            </el-button>
+                        </el-form>
+                    </el-collapse-item>
+
+                    <!-- 数据列表 -->
+                    <el-collapse-item name="2">
+                        <template slot="title" style="background: #F7F7F8;">
+                            <span style="padding-left: 20px;font-size: 2vh">数据列表</span>
+                        </template>
+                        <el-table :data="accountList" :show-header="false" border :border="true" style="width: 100%; max-height: 63.5vh; overflow:scroll"
+                                  :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                            <el-table-column>
+                                <template slot-scope="props">
+                                    <el-form label-position="left" inline class="demo-table-expand">
+                                        <el-form-item label="用户名：" size="mini">
+                                            <span>{{ props.row.username }}</span>
+                                        </el-form-item>
+                                        <el-form-item label="姓名：" size="mini">
+                                            <span>{{ props.row.name }}</span>
+                                        </el-form-item>
+                                        <el-form-item label="角色：" size="mini">
+                                            <p v-for="role in props.row.roles"><span>{{ role.name }}</span></p>
+                                        </el-form-item>
+                                        <p>
+                                            <el-form-item label="状态：">
+                                                <el-switch
+                                                    v-model="props.row.status"
+                                                    active-color="#13ce66"
+                                                    inactive-color="#ff4949"
+                                                    :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdateStatus"
+                                                    @change="updateAccountStatus(props.row)">
+                                                </el-switch>
+                                            </el-form-item>
+                                        </p>
+                                        <el-collapse-transition>
+                                            <div class="transition-box" v-show="props.row.showMore">
+                                                <el-form-item label="手机号：" size="mini">
+                                                    <span>{{ props.row.phone ? props.row.phone : '-' }}</span>
+                                                </el-form-item>
+                                                <el-form-item label="邮箱：" size="mini">
+                                                    <span>{{ props.row.email ? props.row.email : '-' }}</span>
+                                                </el-form-item>
+                                                <p>
+                                                    <el-form-item label="创建人：" size="mini">
+                                                        <span>{{ props.row.createName ? props.row.createName : '-' }}</span>
+                                                    </el-form-item>
+                                                    <el-form-item label="创建时间：" size="mini">
+                                                        <span>{{ props.row.createTime ? $DateUtil.getDateTime(props.row.createTime) : '-' }}</span>
+                                                    </el-form-item>
+                                                </p>
+                                                <p>
+                                                    <el-form-item label="修改人：" size="mini">
+                                                        <span>{{ props.row.updateName ? props.row.updateName : '-' }}</span>
+                                                    </el-form-item>
+                                                    <el-form-item label="修改时间：" size="mini">
+                                                        <span>{{ props.row.updateTime ? $DateUtil.getDateTime(props.row.updateTime) : '-' }}</span>
+                                                    </el-form-item>
+                                                </p>
+
+                                            </div>
+                                        </el-collapse-transition>
+                                        <p>
+                                            <el-form-item size="mini">
+                                                <el-button type="text" size="small"
+                                                           @click="openOrCloseAccountWindow(true)"
+                                                           style="margin-left: 1vw;"
+                                                           v-if="pagePermission.AccountAccountSave">新增账号
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdatePassword"
+                                                           @click="openOrCloseResetPasswordWindow(true, props.row)">
+                                                    重置密码
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdateRole"
+                                                           @click="openOrCloseResetRoleWindow(true, props.row)">
+                                                    设置角色
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdate"
+                                                           @click="openOrCloseAccountWindow(true, props.row)">
+                                                    编辑
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountDelete"
+                                                           @click="deleteAccount(props.row.id)">
+                                                    删除
+                                                </el-button>
+                                            </el-form-item>
+                                        </p>
+                                        <div align="center">
+                                            <el-button size="mini" :autofocus="true" plain :icon="props.row.icon"
+                                                       @click="seeMore(props.row)"
+                                                       style="width: 100%; background: #ecf5ff"></el-button>
+                                        </div>
+                                    </el-form>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-collapse-item>
+                </el-collapse>
             </div>
-            <div style="height: 6.5vh;min-height: 51px">
-                <div class="search_div" style="margin: 1.3vh 1vw">
-                    <span style="color: #000000;font-size: 1.6vh">用户名：</span>
-                    <el-input v-model="query.username" placeholder="请输入用户名" @change="loadAccountList" clearable
-                              style="width: 10vw"></el-input>
+            <!-- PC -->
+            <div style="min-width: 1220px" v-else>
+                <div class="header-item border-r">
+                    <div class="header-top t-h2">
+                        <span style="color: #000000;font-size: 2vh;">筛选条件</span>
+                    </div>
+                    <div style="height: 6.5vh;min-height: 51px">
+                        <div class="search_div" style="margin: 1.3vh 1vw">
+                            <span style="color: #000000;font-size: 1.6vh">用户名：</span>
+                            <el-input v-model="query.username" placeholder="请输入用户名" @change="loadAccountList" clearable
+                                      style="width: 10vw"></el-input>
+                        </div>
+                        <div class="search_div" style="margin: 1.3vh 1vw">
+                            <span style="color: #000000;font-size: 1.6vh">姓名：</span>
+                            <el-input v-model="query.name" placeholder="请输入姓名" @change="loadAccountList" clearable
+                                      style="width: 10vw"></el-input>
+                        </div>
+                        <div class="search_div" style="margin: 1.3vh 1vw">
+                            <span style="color: #000000;font-size: 1.6vh">手机号：</span>
+                            <el-input v-model="query.phone" placeholder="请输入手机号" @change="loadAccountList" clearable
+                                      style="width: 10vw"></el-input>
+                        </div>
+                        <div class="search_div" style="margin: 1.3vh 1vw">
+                            <span style="color: #000000;font-size: 1.6vh">邮箱：</span>
+                            <el-input v-model="query.email" placeholder="请输入邮箱" @change="loadAccountList" clearable
+                                      style="width: 10vw"></el-input>
+                        </div>
+                        <div class="search_div" style="margin: 1.3vh 1vw">
+                            <span style="color: #000000;font-size: 1.6vh">角色：</span>
+                            <el-select v-model="query.roleId" placeholder="请选择" @change="loadAccountList">
+                                <el-option value="" label="全部"></el-option>
+                                <el-option
+                                    v-for="item in roleCheckboxData"
+                                    :key="item.id"
+                                    :label="item.name"
+                                    :value="item.id">
+                                </el-option>
+                            </el-select>
+                        </div>
+                    </div>
                 </div>
-                <div class="search_div" style="margin: 1.3vh 1vw">
-                    <span style="color: #000000;font-size: 1.6vh">姓名：</span>
-                    <el-input v-model="query.name" placeholder="请输入姓名" @change="loadAccountList" clearable
-                              style="width: 10vw"></el-input>
-                </div>
-                <div class="search_div" style="margin: 1.3vh 1vw">
-                    <span style="color: #000000;font-size: 1.6vh">手机号：</span>
-                    <el-input v-model="query.phone" placeholder="请输入手机号" @change="loadAccountList" clearable
-                              style="width: 10vw"></el-input>
-                </div>
-                <div class="search_div" style="margin: 1.3vh 1vw">
-                    <span style="color: #000000;font-size: 1.6vh">邮箱：</span>
-                    <el-input v-model="query.email" placeholder="请输入邮箱" @change="loadAccountList" clearable
-                              style="width: 10vw"></el-input>
-                </div>
-                <div class="search_div" style="margin: 1.3vh 1vw">
-                    <span style="color: #000000;font-size: 1.6vh">角色：</span>
-                    <el-select v-model="query.roleId" placeholder="请选择" @change="loadAccountList">
-                        <el-option value="" label="全部"></el-option>
-                        <el-option
-                            v-for="item in roleCheckboxData"
-                            :key="item.id"
-                            :label="item.name"
-                            :value="item.id">
-                        </el-option>
-                    </el-select>
+                <div class="header-item border-r" style="margin-top: 2vh">
+                    <div class="header-top t-h2">
+                        <span style="color: #000000;font-size: 2vh;">数据列表</span>
+                        <div style="float: right;margin-right: 2vw;">
+                            <el-button type="primary" size="small" @click="openOrCloseAccountWindow(true)"
+                                       style="margin-left: 1vw;" v-if="pagePermission.AccountAccountSave">新增
+                            </el-button>
+                            <el-button type="primary" size="small" @click="openOrCloseResetRoleWindow(true)"
+                                       style="margin-left: 1vw;" v-if="pagePermission.AccountAccountUpdateRole">设置角色
+                            </el-button>
+                            <el-button type="primary" size="small" @click="seeMore"
+                                       style="margin-left: 1vw;">{{seeMoreText}}
+                            </el-button>
+                        </div>
+                    </div>
+                    <div>
+                        <el-table :data="accountList" :border="true" style="width: 100%" row-key="id"
+                                  :row-class-name="$TableRowClassName" :empty-text="emptyText"
+                                  @selection-change="selectionChange">
+                            <el-table-column type="selection" width="55" align="center"
+                                             :selectable="selectable"></el-table-column>
+                            <el-table-column label="编号" align="center" width="60">
+                                <template scope="scope">
+                                    <span v-text="scope.$index+1"></span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="username" label="用户名" align="center"
+                                             :width="!isSeeMore ? '' : 100"></el-table-column>
+                            <el-table-column prop="name" label="姓名" align="center" width="120"></el-table-column>
+                            <el-table-column prop="phone" label="手机号" align="center" :width="!isSeeMore ? '' : 120"
+                                             :formatter="$StringUtil.formatToStringByTable"></el-table-column>
+                            <el-table-column prop="email" label="邮箱" align="center" :width="!isSeeMore ? '' : 160"
+                                             :formatter="$StringUtil.formatToStringByTable"></el-table-column>
+                            <el-table-column prop="roles" label="角色" align="center" :width="!isSeeMore ? '' : 150">
+                                <template slot-scope="scope">
+                                    <div>
+                                        <div
+                                            v-if="$StringUtil.isNotBlank(scope.row.roles) && scope.row.roles.length > 0"
+                                            v-for="(item, index) in scope.row.roles">
+                                            <span>{{item.name}}</span>
+                                        </div>
+                                        <div v-if="$StringUtil.isBlank(scope.row.roles)">
+                                            <span>-</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="status" label="状态" align="center" :width="!isSeeMore ? '' : 100">
+                                <template slot-scope="scope">
+                                    <el-switch
+                                        v-model="scope.row.status"
+                                        active-color="#13ce66"
+                                        inactive-color="#ff4949"
+                                        :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdateStatus"
+                                        @change="updateAccountStatus(scope.row)">
+                                    </el-switch>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="createTime" label="创建日期" align="center"
+                                             :width="!isSeeMore ? '' : 160"
+                                             :formatter="$DateUtil.formatDateByTable"
+                                             v-if="isSeeMore"></el-table-column>
+                            <el-table-column prop="createName" label="创建人" align="center" :width="isSeeMore ? '' : 160"
+                                             :formatter="$StringUtil.formatToStringByTable"
+                                             v-if="isSeeMore"></el-table-column>
+                            <el-table-column prop="updateTime" label="修改日期" align="center"
+                                             :width="!isSeeMore ? '' : 160"
+                                             :formatter="$DateUtil.formatDateByTable"
+                                             v-if="isSeeMore"></el-table-column>
+                            <el-table-column prop="updateName" label="修改人" align="center" :width="!isSeeMore ? '' : 160"
+                                             :formatter="$StringUtil.formatToStringByTable"
+                                             v-if="isSeeMore"></el-table-column>
+
+                            <el-table-column label="操作" align="center" width="350">
+                                <template slot-scope="scope">
+                                    <el-button type="primary" size="mini"
+                                               :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdatePassword"
+                                               @click="openOrCloseResetPasswordWindow(true, scope.row)">
+                                        重置密码
+                                    </el-button>
+                                    <el-button type="primary" size="mini"
+                                               :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdateRole"
+                                               @click="openOrCloseResetRoleWindow(true, scope.row)">
+                                        设置角色
+                                    </el-button>
+                                    <el-button type="primary" size="mini"
+                                               :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdate"
+                                               @click="openOrCloseAccountWindow(true, scope.row)">
+                                        编辑
+                                    </el-button>
+                                    <el-button type="danger" size="mini"
+                                               :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountDelete"
+                                               @click="deleteAccount(scope.row.id)">
+                                        删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="header-item border-r" style="margin-top: 2vh">
-            <div class="header-top t-h2">
-                <span style="color: #000000;font-size: 2vh;">数据列表</span>
-                <div style="float: right;margin-right: 2vw;">
-                    <el-button type="primary" size="small" @click="openOrCloseAccountWindow(true)"
-                               style="margin-left: 1vw;" v-if="pagePermission.AccountAccountSave">新增
-                    </el-button>
-                    <el-button type="primary" size="small" @click="openOrCloseResetRoleWindow(true)"
-                               style="margin-left: 1vw;" v-if="pagePermission.AccountAccountUpdateRole">设置角色
-                    </el-button>
-                    <el-button type="primary" size="small" @click="seeMore"
-                               style="margin-left: 1vw;" >{{seeMoreText}}
-                    </el-button>
-                </div>
-            </div>
-            <div>
-                <el-table :data="accountList" :border="true" style="width: 100%" row-key="id"
-                          :row-class-name="$TableRowClassName" :empty-text="emptyText" @selection-change="selectionChange">
-                    <el-table-column type="selection" width="55" align="center"
-                                     :selectable="selectable"></el-table-column>
-                    <el-table-column label="编号" align="center" width="60">
-                        <template scope="scope">
-                            <span v-text="scope.$index+1"></span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="username"  label="用户名" align="center":width="!isSeeMore ? '' : 100"></el-table-column>
-                    <el-table-column prop="name" label="姓名" align="center" width="120"></el-table-column>
-                    <el-table-column prop="phone" label="手机号" align="center" :width="!isSeeMore ? '' : 120"
-                                     :formatter="$StringUtil.formatToStringByTable"></el-table-column>
-                    <el-table-column prop="email" label="邮箱" align="center" :width="!isSeeMore ? '' : 160"
-                                     :formatter="$StringUtil.formatToStringByTable"></el-table-column>
-                    <el-table-column prop="roles" label="角色" align="center" :width="!isSeeMore ? '' : 150">
-                        <template slot-scope="scope">
-                            <div>
-                                <div v-if="$StringUtil.isNotBlank(scope.row.roles) && scope.row.roles.length > 0"
-                                     v-for="(item, index) in scope.row.roles">
-                                    <span>{{item.name}}</span>
-                                </div>
-                                <div v-if="$StringUtil.isBlank(scope.row.roles)">
-                                    <span>-</span>
-                                </div>
-                            </div>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="status" label="状态" align="center" :width="!isSeeMore ? '' : 100">
-                        <template slot-scope="scope">
-                            <el-switch
-                                v-model="scope.row.status"
-                                active-color="#13ce66"
-                                inactive-color="#ff4949"
-                                :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdateStatus"
-                                @change="updateAccountStatus(scope.row)">
-                            </el-switch>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="createTime" label="创建日期" align="center" :width="!isSeeMore ? '' : 160"
-                                     :formatter="$DateUtil.formatDateByTable" v-if="isSeeMore"></el-table-column>
-                    <el-table-column prop="createName" label="创建人" align="center" :width="isSeeMore ? '' : 160"
-                                     :formatter="$StringUtil.formatToStringByTable" v-if="isSeeMore"></el-table-column>
-                    <el-table-column prop="updateTime" label="修改日期" align="center" :width="!isSeeMore ? '' : 160"
-                                     :formatter="$DateUtil.formatDateByTable" v-if="isSeeMore"></el-table-column>
-                    <el-table-column prop="updateName" label="修改人" align="center" :width="!isSeeMore ? '' : 160"
-                                     :formatter="$StringUtil.formatToStringByTable" v-if="isSeeMore"></el-table-column>
-
-                    <el-table-column label="操作" align="center" width="350">
-                        <template slot-scope="scope">
-                            <el-button type="primary" size="mini"
-                                       :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdatePassword"
-                                       @click="openOrCloseResetPasswordWindow(true, scope.row)">
-                                重置密码
-                            </el-button>
-                            <el-button type="primary" size="mini"
-                                       :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdateRole"
-                                       @click="openOrCloseResetRoleWindow(true, scope.row)">
-                                设置角色
-                            </el-button>
-                            <el-button type="primary" size="mini"
-                                       :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountUpdate"
-                                       @click="openOrCloseAccountWindow(true, scope.row)">
-                                编辑
-                            </el-button>
-                            <el-button type="danger" size="mini"
-                                       :disabled="disabledButton(scope.row.username) || !pagePermission.AccountAccountDelete"
-                                       @click="deleteAccount(scope.row.id)">
-                                删除
-                            </el-button>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </div>
-            <div>
-                <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
-                    <el-pagination
-                        @size-change="handleSizeChange"
-                        @current-change="handleCurrentChange"
-                        :current-page="currentPage"
-                        :page-sizes="[5, 10, 20, 50, 100]"
-                        :page-size="pageSize"
-                        layout="total, sizes, prev, pager, next, jumper"
-                        :total="total">
-                    </el-pagination>
-                </div>
+        <div>
+            <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
+                <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[1, 5, 10, 20, 50, 100]"
+                    :page-size="pageSize"
+                    :layout=" isPc ? 'total, sizes, prev, pager, next, jumper' : 'prev, pager, next'"
+                    :total="total"
+                    prev-text="上一页"
+                    next-text="下一页"
+                    :small="!isPc">
+                </el-pagination>
             </div>
         </div>
 
         <!-- 表单 -->
-        <el-dialog :title="accountForm.accountFormTitle" :visible.sync="accountForm.openOrClose" width="60%"
-                   :top="accountForm.id === '' ? '3vh' : '15vh'">
-            <!--<div>
-                <input type="text"></input>
-                <input type="password"></input>
-            </div>-->
+        <el-dialog :title="accountForm.accountFormTitle" :visible.sync="accountForm.openOrClose"
+                   :width="isPc ? '60%' : '95%'"
+                   :top=" isPc ? (accountForm.id === '' ? '3vh' : '15vh') : (accountForm.id === '' ? '1vh' : '3vh')">
             <el-form :model="accountForm" :rules="accountFormRules" ref="accountForm">
                 <!-- 解决浏览器自动填充 -->
                 <input type="password" style="position:absolute;top: -9999px;"/>
@@ -180,11 +341,18 @@
                                  v-model="accountForm.checkRoleAll" @change="handleCheckAllChange">全选
                     </el-checkbox>
                     <br>
-                    <el-checkbox-group v-model="accountForm.roles" @change="handleCheckedRoleSChange">
+                    <el-checkbox-group v-if="isPc" v-model="accountForm.roles" @change="handleCheckedRoleSChange">
                         <el-checkbox v-for="(item, index) in roleCheckboxData" :key="index"
                                      :style="index === 0 ? 'margin-left: 0.55vw;' : ' '"
                                      :label="item.id" border>{{item.name}}
                         </el-checkbox>
+                    </el-checkbox-group>
+                    <el-checkbox-group v-else v-model="resetRoleFrom.roles"
+                                       @change="resetRoleFromHandleCheckedRoleSChange">
+                        <p v-for="(item, index) in roleCheckboxData" :key="index">
+                            <el-checkbox :label="item.id" border>{{item.name}}
+                            </el-checkbox>
+                        </p>
                     </el-checkbox-group>
                 </el-form-item>
             </el-form>
@@ -196,7 +364,7 @@
 
         <!-- 重置密码 -->
         <el-dialog :title="resetPasswordFrom.resetPasswordFromTitle" :visible.sync="resetPasswordFrom.openOrClose"
-                   width="60%" top="15vh">
+                   :width="isPc ? '60%' : '95%'" top="15vh">
             <el-form :model="resetPasswordFrom" :rules="resetPasswordFromRules" ref="resetPasswordFrom">
                 <!-- 解决浏览器自动填充 -->
                 <input type="password" style="position:absolute;top: -9999px;"/>
@@ -217,7 +385,7 @@
 
         <!-- 设置角色 -->
         <el-dialog :title="resetRoleFrom.resetRoleFromTitle" :visible.sync="resetRoleFrom.openOrClose"
-                   width="60%" top="15vh">
+                   :width="isPc ? '60%' : '95%'" top="15vh">
             <el-form :model="resetRoleFrom" ref="resetRoleFrom">
                 <el-form-item label="" prop="roles">
                     <br>
@@ -225,11 +393,20 @@
                                  v-model="resetRoleFrom.checkRoleAll" @change="resetRoleFromHandleCheckAllChange">全选
                     </el-checkbox>
                     <br>
-                    <el-checkbox-group v-model="resetRoleFrom.roles" @change="resetRoleFromHandleCheckedRoleSChange">
+                    <el-checkbox-group v-if="isPc" v-model="resetRoleFrom.roles"
+                                       @change="resetRoleFromHandleCheckedRoleSChange">
                         <el-checkbox v-for="(item, index) in roleCheckboxData" :key="index"
                                      :style="index === 0 ? 'margin-left: 0.55vw;' : ' '"
                                      :label="item.id" border>{{item.name}}
                         </el-checkbox>
+                    </el-checkbox-group>
+
+                    <el-checkbox-group v-else v-model="resetRoleFrom.roles"
+                                       @change="resetRoleFromHandleCheckedRoleSChange">
+                        <p v-for="(item, index) in roleCheckboxData" :key="index">
+                            <el-checkbox :label="item.id" border>{{item.name}}
+                            </el-checkbox>
+                        </p>
                     </el-checkbox-group>
                 </el-form-item>
             </el-form>
@@ -422,6 +599,10 @@
                 }
             };
             return {
+                //是否是PC端
+                isPc: true,
+                //折叠面板显示的值
+                activeName: "2",
                 //页面按钮权限(权限url首字母大写,否则不能动态修改)
                 pagePermission: {
                     AccountAccountList: false,
@@ -435,7 +616,7 @@
                 //账号列表数据
                 accountList: [],
                 //是否显示更多信息
-                isSeeMore : false,
+                isSeeMore: false,
                 //账号模糊查询
                 query: {
                     username: "",
@@ -584,7 +765,7 @@
                 }
             },
             //显示更多按钮描述
-            seeMoreText(){
+            seeMoreText() {
                 if (this.isSeeMore) {
                     return "显示简略信息"
                 } else {
@@ -593,6 +774,8 @@
             },
         },
         async mounted() {
+            this.isPc = this.$IsPC();
+            this.pageSize = this.isPc ? 10 : 5;
             //页面按钮权限(权限url首字母大写,否则不能动态修改)
             await this.$GetAccountMenuPermission(this.pagePermission);
             //加载账号列表
@@ -601,8 +784,35 @@
             this.loadRoleCheckbox();
         },
         methods: {
-            seeMore(){
-              this.isSeeMore = !this.isSeeMore
+            /**
+             * @Description :
+             * @Author : cheng fei
+             * @CreateDate 2019/5/29 15:40
+             * @Param
+             */
+            seeMore(item) {
+                if (this.isPc) {
+                    this.isSeeMore = !this.isSeeMore
+                } else {
+                    item.showMore = !item.showMore;
+                    if (item.showMore) {
+                        item.icon = "el-icon-arrow-up";
+                    } else {
+                        item.icon = "el-icon-arrow-down";
+                    }
+
+
+                }
+            },
+            /**
+             * @Description : 移动端执行查询
+             * @Author : cheng fei
+             * @CreateDate 2019/5/29 16:57
+             */
+            doSearch() {
+                this.currentPage = 1;
+                this.loadAccountList();
+                this.showScreen = false;
             },
             /**
              * @Description : 账号列表选中项发生变化时
@@ -611,12 +821,10 @@
              * @Param
              */
             selectionChange(selection) {
-                console.log("selection")
                 this.selectedAccountIds = [];
                 for (let i in selection) {
                     this.selectedAccountIds.push(selection[i].id)
                 }
-                console.log("this.selectedAccountIds==>", this.selectedAccountIds)
             },
             /**
              * @Description : 是否禁用复选框
@@ -678,6 +886,13 @@
                         function (self, data) {
                             self.accountList = data.data.rows;
                             self.total = data.data.count;
+                            if (!self.isPc) {
+                                self.activeName = '2';
+                                self.accountList.forEach((item) => {
+                                    self.$set(item, 'showMore', false);
+                                    self.$set(item, 'icon', 'el-icon-arrow-down')
+                                })
+                            }
                         }
                     )
                 }
@@ -776,7 +991,6 @@
              */
             openOrCloseAccountWindow(value, data) {
                 this.accountForm.openOrClose = value;
-                this.loadRoleCheckbox();
                 if (value) {
                     //开启表单
                     if (this.$ObjectUtil.isBlank(data)) {
@@ -873,7 +1087,7 @@
              * @CreateDate 2019/5/28 15:48
              * @Param account 账号详情
              */
-            doUpdateAccountStatus(account){
+            doUpdateAccountStatus(account) {
                 this.$Http.doPostForForm(
                     this,
                     "account/account/update/status",
@@ -903,7 +1117,7 @@
             updateAccountStatus(account) {
                 if (account.status) {
                     this.doUpdateAccountStatus(account);
-                }else {
+                } else {
                     this.$confirm('确认要禁用该账号？', '提示', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
@@ -943,7 +1157,7 @@
                     )
                 }).catch(() => {
 
-                })
+                });
             },
             /**
              * @Description : 开启/关闭重置密码窗口

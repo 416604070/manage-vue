@@ -6,7 +6,7 @@
 import axios from "./axios";
 import router from "../../router/index";
 import config from "../../config/Config";
-import { Loading, MessageBox } from 'element-ui';
+import { Confirm } from '../confirm/ConfirmUtil';
 import { getToken } from "../account/AccountUtil"
 import store from "../../store/index";
 import  * as types from "../../store/mutation-types"
@@ -324,7 +324,7 @@ function isAlertLoginOverTime() {
  * @Param
  */
 function errorMsg(msg) {
-    MessageBox.confirm(msg, '错误', {
+    Confirm(msg, '错误', {
         confirmButtonText: '确定',
         showCancelButton: false,
         type: 'error',

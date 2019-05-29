@@ -45,6 +45,9 @@ import { tableRowClassName } from "./utils/table/ElementTableUtil"
 //判断是否是PC端
 import { isPC } from "./utils/system/SystemUtil"
 
+//Confirm
+import { Confirm } from "./utils/confirm/ConfirmUtil"
+
 // 注册全局组件（register global）
 Vue.component("icon-svg", IconSvg);
 Vue.prototype.$Config = config;
@@ -55,9 +58,10 @@ Vue.prototype.$Http = http;
 Vue.prototype.$TreeUtil = TreeUtil;
 Vue.prototype.$PasswordUtil = PasswordUtil;
 Vue.prototype.$Types = types;
-Vue.prototype.$GetAccountMenuPermission =  getAccountMenuPermission;
-Vue.prototype.$TableRowClassName =  tableRowClassName;
-Vue.prototype.$IsPC =  isPC;
+Vue.prototype.$GetAccountMenuPermission = getAccountMenuPermission;
+Vue.prototype.$TableRowClassName = tableRowClassName;
+Vue.prototype.$IsPC = isPC;
+Vue.prototype.$confirm = Confirm;
 
 
 

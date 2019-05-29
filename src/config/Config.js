@@ -11,7 +11,7 @@ const config = {
     /**
      * 后端服务地址
      */
-    serverUrl : "http://localhost:8080/",
+    serverUrl : "http://10.0.101.135:8080/",
     // serverUrl : "http://112.74.183.118:8080/",
     // serverUrl : "https://manage.service.chengfei.top/",
 

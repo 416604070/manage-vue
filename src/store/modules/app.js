@@ -9,6 +9,7 @@ const state = {
     },
     visitedViews: [],
     doHttp : 0,
+    isPc : "",
 };
 
 //加载
@@ -18,6 +19,7 @@ let loadingInstance = "";
 const getters = {
     sidebar: state => state.sidebar,
     visitedViews: state => state.visitedViews,
+    isPc: state=> state.isPc,
 };
 
 // actions
@@ -80,6 +82,9 @@ const mutations = {
         if (state.doHttp === 0){
             loadingInstance.close();
         }
+    },
+    [types.IS_PC](state, isPc){
+        state.isPc = isPc;
     }
 };
 
