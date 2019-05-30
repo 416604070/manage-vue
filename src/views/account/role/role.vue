@@ -13,7 +13,7 @@
                             <el-input v-model="name" placeholder="请输入用户名" clearable></el-input>
                         </el-form-item>
                         <el-form-item label="每页显示记录数：" size="mini">
-                            <el-select v-model="pageSize" placeholder="请选择" style="width: 15vw">
+                            <el-select v-model="pageSize" placeholder="请选择" style="width: 20vw">
                                 <el-option value="3" label="3"></el-option>
                                 <el-option value="5" label="5"></el-option>
                                 <el-option value="10" label="10"></el-option>
@@ -371,12 +371,22 @@
         computed: {
             //数据为空时描述
             emptyText() {
-                if (this.pagePermission.SystemMenuList) {
+                if (this.pagePermission.AccountRoleList) {
                     return "暂无数据"
                 } else {
                     return "您无查看权限！"
                 }
             },
+        },
+        watch : {
+            pageSize : function (newValue, oldValue) {
+                const re = /^[1-9]+[0-9]*]*$/;
+                if (!re.test(newValue)) {
+                    this.pageSize = oldValue
+                } else {
+                    this.pageSize = parseInt(newValue)
+                }
+            }
         },
         async mounted() {
             //是否是PC端
@@ -389,11 +399,13 @@
 
         },
         methods: {
+
             /**
              * @Description : 移动端显示更多
              * @Author : cheng fei
              * @CreateDate 2019/5/29 23:48
-             * /
+             * @Param item 当前记录
+             */
             seeMore(item) {
                 item.showMore = !item.showMore;
                 if (item.showMore) {
@@ -402,11 +414,11 @@
                     item.icon = "el-icon-arrow-down";
                 }
             },
-             /**
+            /**
              * @Description : 移动端数据筛选
              * @Author : cheng fei
              * @CreateDate 2019/5/29 23:49
-             * /
+             */
             doSearch() {
                 this.currentPage = 1;
                 this.loadRoleList();
@@ -431,10 +443,12 @@
                             self.total = data.data.count;
                             if (!self.isPc) {
                                 self.activeName = '2';
-                                self.roleList.forEach((item) => {
-                                    self.$set(item, 'showMore', false)
-                                    self.$set(item, 'icon', 'el-icon-arrow-down')
-                                })
+                                if (self.roleList && self.roleList.length >0){
+                                    self.roleList.forEach((item) => {
+                                        self.$set(item, 'showMore', false)
+                                        self.$set(item, 'icon', 'el-icon-arrow-down')
+                                    })
+                                }
                             }
                         }
                     )
@@ -455,6 +469,7 @@
              * @CreateDate 2019/4/27 14:25
              */
             handleSizeChange(pageSize) {
+                this.currentPage = 1;
                 this.pageSize = pageSize;
                 this.loadRoleList();
             },

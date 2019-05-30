@@ -1,88 +1,220 @@
 <template>
     <div>
-        <div>
-            <el-button style="margin-top: 2vh;" type="primary" size="small"
-                       @click="openOrCloseDictionaryWindow(true)" v-if="pagePermission.SystemDictionarySave">新增
-            </el-button>
-            <el-button style="margin-top: 2vh;" type="primary" size="small"
-                       @click="goBack()">返回上一级
-            </el-button>
-        </div>
-        <div style="margin: 2vh 0vw 2vh 1.5vw;">
-            <el-breadcrumb separator-class="el-icon-arrow-right">
-                <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
-                    <el-button type="text" @click="changParentDictionary(item, index)">{{item.name}}</el-button>
-                </el-breadcrumb-item>
-            </el-breadcrumb>
-        </div>
-        <div>
+        <!-- 移动端 -->
+        <div v-if="!isPc">
             <div>
-                <el-table :data="dictionaryList" :border="true" style="width: 100%" row-key="id" :row-class-name="$TableRowClassName" :empty-text="emptyText">
-                    <el-table-column label="编号" align="center" width="70">
-                        <template scope="scope">
-                            <span v-text="scope.$index+1"></span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="name" label="名称" align="center" width="200">
-                        <template scope="scope">
-                            <el-button type="text" @click="clickDictionary(scope.row)">{{scope.row.name}}</el-button>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="key" label="key" align="center"></el-table-column>
-                    <el-table-column prop="value" label="value" align="center" width="100"
-                                     :formatter="formatString"></el-table-column>
-                    <el-table-column prop="displayOrder" label="排序码" align="center" width="80"></el-table-column>
-                    <el-table-column prop="createTime" label="创建时间" align="center" :formatter="formatDate"
-                                     width="180"></el-table-column>
-                    <el-table-column prop="createName" label="创建人" align="center" :formatter="formatString"
-                                     width="130"></el-table-column>
-                    <el-table-column prop="updateTime" label="修改时间" align="center" :formatter="formatDate"
-                                     width="180"></el-table-column>
-                    <el-table-column prop="updateName" label="修改人" align="center" :formatter="formatString"
-                                     width="130"></el-table-column>
-                    <el-table-column prop="status" label="状态" align="center" width="80">
-                        <template slot-scope="scope">
-                            <el-switch
-                                v-model="scope.row.status"
-                                active-color="#13ce66"
-                                inactive-color="#ff4949"
-                                :disabled="!pagePermission.SystemDictionaryUpdateStatus"
-                                @change="updateDictionaryStatus(scope.row)">
-                            </el-switch>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="操作" align="center" width="150">
-                        <template slot-scope="scope">
-                            <el-button type="primary" size="mini" :disabled="!pagePermission.SystemDictionaryUpdate"
-                                       @click="openOrCloseDictionaryWindow(true, scope.row)">
-                                编辑
-                            </el-button>
-                            <el-button type="danger" size="mini" :disabled="!pagePermission.SystemDictionaryDelete"
-                                       @click="deleteDictionary(scope.row.id)">删除
-                            </el-button>
+                <div>
+                    <el-form>
+                        <el-form-item size="mini">
+                            <div>
+
+                                <div style="float: left">
+                                    <el-button type="text" size="small"
+                                               @click="goBack()">返回上一级
+                                    </el-button>
+                                    <el-button type="text" size="small"
+                                               @click="openOrCloseDictionaryWindow(true)"
+                                               v-if="pagePermission.SystemDictionarySave">新增数据字典
+                                    </el-button>
+                                </div>
+
+                                <div align="right" style="float: right">
+                                    <span style="color: #909399">每页显示记录数：</span>
+                                    <el-select v-model="pageSize" placeholder="请选择" @change="handleSizeChange" style="width: 15vw; height: 10px">
+                                        <el-option value=3 label=3></el-option>
+                                        <el-option value=5 label=5></el-option>
+                                        <el-option value=10 label=10></el-option>
+                                        <el-option value=15 label=15></el-option>
+                                        <el-option value=20 label=20></el-option>
+                                        <el-option value=50 label=50></el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                        </el-form-item>
+                        <el-form-item size="mini">
+                            <el-breadcrumb separator-class="el-icon-arrow-right">
+                                <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
+                                    <el-button type="text" @click="changParentDictionary(item, index)">{{item.name}}
+                                    </el-button>
+                                </el-breadcrumb-item>
+                            </el-breadcrumb>
+                        </el-form-item>
+                    </el-form>
+                </div>
+            </div>
+            <div>
+                <!-- <div>
+                     <span></span>
+                 </div>-->
+                <el-table :data="dictionaryList" :show-header="true" border :border="true"
+                          :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                    <el-table-column label="数据列表">
+                        <template slot-scope="props">
+                            <el-form label-position="left" inline class="demo-table-expand">
+                                <el-form-item size="mini">
+                                    <span>名称：</span>
+                                    <el-button type="text" size="medium" @click="clickDictionary(props.row)">
+                                        {{props.row.name}}
+                                    </el-button>
+                                </el-form-item>
+                                <p>
+                                    <el-form-item label="Key：" size="mini">
+                                        <span>{{ props.row.key }}</span>
+                                    </el-form-item>
+                                    <el-form-item label="value：" size="mini">
+                                        <span>{{ props.row.value ? props.row.value : '-' }}</span>
+                                    </el-form-item>
+                                </p>
+                                <p>
+                                    <el-form-item label="状态：">
+                                        <el-switch
+                                            v-model="props.row.status"
+                                            active-color="#13ce66"
+                                            inactive-color="#ff4949"
+                                            :disabled="!pagePermission.SystemDictionaryUpdateStatus"
+                                            @change="updateDictionaryStatus(props.row)">
+                                        </el-switch>
+                                    </el-form-item>
+                                </p>
+                                <el-collapse-transition>
+                                    <div class="transition-box" v-show="props.row.showMore">
+                                        <el-form-item label="排序码：" size="mini">
+                                            <span>{{ props.row.displayOrder}}</span>
+                                        </el-form-item>
+                                        <p>
+                                            <el-form-item label="创建人：" size="mini">
+                                                <span>{{ props.row.createName ? props.row.createName : '-' }}</span>
+                                            </el-form-item>
+                                            <el-form-item label="创建时间：" size="mini">
+                                                <span>{{ props.row.createTime ? $DateUtil.getDateTime(props.row.createTime) : '-' }}</span>
+                                            </el-form-item>
+                                        </p>
+                                        <p>
+                                            <el-form-item label="修改人：" size="mini">
+                                                <span>{{ props.row.updateName ? props.row.updateName : '-' }}</span>
+                                            </el-form-item>
+                                            <el-form-item label="修改时间：" size="mini">
+                                                <span>{{ props.row.updateTime ? $DateUtil.getDateTime(props.row.updateTime) : '-' }}</span>
+                                            </el-form-item>
+                                        </p>
+                                    </div>
+                                </el-collapse-transition>
+                                <p>
+                                    <el-form-item size="mini">
+                                        <el-button type="primary" size="mini"
+                                                   :disabled="!pagePermission.SystemDictionaryUpdate"
+                                                   @click="openOrCloseDictionaryWindow(true, props.row)">
+                                            编辑
+                                        </el-button>
+                                        <el-button type="danger" size="mini"
+                                                   :disabled="!pagePermission.SystemDictionaryDelete"
+                                                   @click="deleteDictionary(props.row.id)">删除
+                                        </el-button>
+                                    </el-form-item>
+                                </p>
+                                <div align="center">
+                                    <el-button size="mini" :autofocus="true" plain :icon="props.row.icon"
+                                               @click="seeMore(props.row)"
+                                               style="width: 100%; background: #ecf5ff"></el-button>
+                                </div>
+                            </el-form>
                         </template>
                     </el-table-column>
                 </el-table>
             </div>
+        </div>
+
+        <!-- PC -->
+        <div v-else>
             <div>
-                <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
-                    <el-pagination
-                        @size-change="handleSizeChange"
-                        @current-change="handleCurrentChange"
-                        :current-page="currentPage"
-                        :page-sizes="[5, 10, 20, 50]"
-                        :page-size="pageSize"
-                        layout="total, sizes, prev, pager, next, jumper"
-                        :total="total">
-                    </el-pagination>
+                <el-button style="margin-top: 2vh;" type="primary" size="small"
+                           @click="openOrCloseDictionaryWindow(true)" v-if="pagePermission.SystemDictionarySave">新增
+                </el-button>
+                <el-button style="margin-top: 2vh;" type="primary" size="small"
+                           @click="goBack()">返回上一级
+                </el-button>
+            </div>
+            <div style="margin: 2vh 0vw 2vh 1.5vw;">
+                <el-breadcrumb separator-class="el-icon-arrow-right">
+                    <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
+                        <el-button type="text" @click="changParentDictionary(item, index)">{{item.name}}</el-button>
+                    </el-breadcrumb-item>
+                </el-breadcrumb>
+            </div>
+            <div>
+                <div>
+                    <el-table :data="dictionaryList" :border="true" style="width: 100%" row-key="id"
+                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                        <el-table-column label="编号" align="center" width="70">
+                            <template scope="scope">
+                                <span v-text="scope.$index+1"></span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="name" label="名称" align="center" width="200">
+                            <template scope="scope">
+                                <el-button type="text" @click="clickDictionary(scope.row)">{{scope.row.name}}
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="key" label="key" align="center"></el-table-column>
+                        <el-table-column prop="value" label="value" align="center" width="100"
+                                         :formatter="formatString"></el-table-column>
+                        <el-table-column prop="displayOrder" label="排序码" align="center" width="80"></el-table-column>
+                        <el-table-column prop="createTime" label="创建时间" align="center" :formatter="formatDate"
+                                         width="180"></el-table-column>
+                        <el-table-column prop="createName" label="创建人" align="center" :formatter="formatString"
+                                         width="130"></el-table-column>
+                        <el-table-column prop="updateTime" label="修改时间" align="center" :formatter="formatDate"
+                                         width="180"></el-table-column>
+                        <el-table-column prop="updateName" label="修改人" align="center" :formatter="formatString"
+                                         width="130"></el-table-column>
+                        <el-table-column prop="status" label="状态" align="center" width="80">
+                            <template slot-scope="scope">
+                                <el-switch
+                                    v-model="scope.row.status"
+                                    active-color="#13ce66"
+                                    inactive-color="#ff4949"
+                                    :disabled="!pagePermission.SystemDictionaryUpdateStatus"
+                                    @change="updateDictionaryStatus(scope.row)">
+                                </el-switch>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" align="center" width="150">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="mini" :disabled="!pagePermission.SystemDictionaryUpdate"
+                                           @click="openOrCloseDictionaryWindow(true, scope.row)">
+                                    编辑
+                                </el-button>
+                                <el-button type="danger" size="mini" :disabled="!pagePermission.SystemDictionaryDelete"
+                                           @click="deleteDictionary(scope.row.id)">删除
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
                 </div>
+            </div>
+        </div>
+        <div>
+            <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
+                <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[5, 10, 20, 50]"
+                    :page-size="pageSize"
+                    :layout="isPc ? 'total, sizes, prev, pager, next, jumper' : 'prev, pager, next'"
+                    :small="!isPc"
+                    :total="total"
+                    prev-text="上一页"
+                    next-text="下一页">
+                </el-pagination>
             </div>
         </div>
 
 
         <!-- 表单 -->
-        <el-dialog :title="dictionaryForm.dictionaryFormTitle" :visible.sync="dictionaryForm.openOrClose" width="60%"
-                   top="10vh">
+        <el-dialog :title="dictionaryForm.dictionaryFormTitle" :visible.sync="dictionaryForm.openOrClose" :width="isPc ? '60%' : '90%'"
+                   :top="isPc ? '10vh' : '2vh'">
             <el-form :model="dictionaryForm" :rules="dictionaryFormRules" ref="dictionaryForm">
                 <el-form-item label="名称" prop="name">
                     <el-input type="text" v-model="dictionaryForm.name" auto-complete="off"></el-input>
@@ -212,6 +344,8 @@
                 }
             };
             return {
+                //是否是PC端
+                isPc: true,
                 //页面按钮权限(权限url首字母大写,否则不能动态修改)
                 pagePermission: {
                     SystemDictionaryList: false,
@@ -289,7 +423,19 @@
                 }
             },
         },
+        watch : {
+            pageSize : function (newValue, oldValue) {
+                const re = /^[1-9]+[0-9]*]*$/;
+                if (!re.test(newValue)) {
+                    this.pageSize = oldValue
+                } else {
+                    this.pageSize = parseInt(newValue)
+                }
+            }
+        },
         async mounted() {
+            this.isPc = this.$IsPC();
+            this.pageSize = this.isPc ? 10 : 5;
             //加载页面按钮权限
             await this.$GetAccountMenuPermission(this.pagePermission);
             //加载数据字典列表
@@ -301,6 +447,20 @@
          * @CreateDate 2019/4/15 23:11
          */
         methods: {
+            /**
+             * @Description : 移动端显示更多
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 16:52
+             * @Param
+             */
+            seeMore(item) {
+                item.showMore = !item.showMore;
+                if (item.showMore) {
+                    item.icon = "el-icon-arrow-up";
+                } else {
+                    item.icon = "el-icon-arrow-down";
+                }
+            },
             /**
              * @Description : 加载数据字典列表
              * @Author : cheng fei
@@ -322,6 +482,14 @@
                         function (self, data) {
                             self.dictionaryList = data.data.rows;
                             self.total = data.data.count;
+                            if (!self.isPc) {
+                                if (self.dictionaryList && self.dictionaryList.length > 0) {
+                                    self.dictionaryList.forEach((item) => {
+                                        self.$set(item, 'showMore', false);
+                                        self.$set(item, 'icon', 'el-icon-arrow-down')
+                                    })
+                                }
+                            }
                         }
                     )
                 }
@@ -333,7 +501,10 @@
              * @Param pageSize 每页加载条数
              */
             handleSizeChange(pageSize) {
-                this.pageSize = pageSize;
+                this.currentPage = 1;
+                if (this.isPc) {
+                    this.pageSize = pageSize;
+                }
                 this.loadDictionaryList();
             },
             /**
@@ -393,7 +564,7 @@
              * @CreateDate 2019/5/28 17:27
              * @Param  dictionary 数据字典数据
              */
-            doUpdateDictionaryStatus (dictionary) {
+            doUpdateDictionaryStatus(dictionary) {
                 let params = {
                     id: dictionary.id,
                     status: dictionary.status,

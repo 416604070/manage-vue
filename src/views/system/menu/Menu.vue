@@ -1,76 +1,199 @@
 <template>
     <div>
         <div>
-            <div class="table-left border-r" style="min-width: 200px">
-                <div class="header-top">
-                    <span style="color: #000000">菜单</span>
-                    <el-button class="btnbox-r fl-r" v-if="pagePermission.SystemMenuSave" style="margin-top: 13px;"
-                               type="primary" size="small"
-                               @click="openOrCloseMenuWindow(true)">新增
-                    </el-button>
-                </div>
-                <div style="font-size: 16px" v-if="pagePermission.SystemMenuList">
-                    <el-tree ref="menuTree" :accordion="true" :props="menuTreeProps" :load="loadMenuTreeNode"
-                             :data="menuTreeData" node-key="id"
-                             lazy :highlight-current="true" @node-click="clickMenuTreeNode">
-                    </el-tree>
-                </div>
-                <div style="height: 50px; color: #909399; text-align:center; line-height: 50px" v-else>
-                    {{emptyText}}
-                </div>
+            <!-- 移动端 -->
+            <div v-if="!isPc">
+                <el-collapse v-model="activeName" accordion>
+                    <!-- 筛选条件 -->
+                    <el-collapse-item name="1">
+                        <template slot="title">
+                            <span style="padding-left: 5px;font-size: 2vh;">父菜单：{{choseParentPath}}</span>
+                        </template>
+                        <el-form label-position="left" inline class="demo-table-expand" style="margin-left: 7vw">
+                            <el-form-item label="" size="mini">
+                                <div style="font-size: 16px" v-if="pagePermission.SystemMenuList">
+                                    <el-tree ref="menuTree" :accordion="true" :props="menuTreeProps"
+                                             :load="loadMenuTreeNode"
+                                             :data="menuTreeData" node-key="id"
+                                             lazy :highlight-current="true" @node-click="clickMenuTreeNode">
+                                    </el-tree>
+                                </div>
+                            </el-form-item>
+                            <p>
+                                <el-button type="primary" size="mini" @click="doSearch()"
+                                           style="margin-left: 1vw;">查看菜单列表
+                                </el-button>
+                                <el-button v-if="pagePermission.SystemMenuSave"
+                                           type="primary" size="mini"
+                                           @click="openOrCloseMenuWindow(true)">新增菜单
+                                </el-button>
+                            </p>
+                        </el-form>
+                    </el-collapse-item>
+
+                    <!-- 数据列表 -->
+                    <el-collapse-item name="2">
+                        <template slot="title">
+                            <span style="padding-left: 5px;font-size: 2vh">菜单列表</span>
+                        </template>
+                        <el-table :data="menuList" :border="true" :show-header="false" style="width: 100%" row-key="id"
+                                  :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                            <el-table-column>
+                                <template slot-scope="props">
+                                    <el-form label-position="left" inline class="demo-table-expand">
+                                        <el-form-item label="菜单名：" size="mini">
+                                            <span>{{ props.row.name }}</span>
+                                        </el-form-item>
+                                        <el-form-item label="URL：" size="mini">
+                                            <span>{{ props.row.url }}</span>
+                                        </el-form-item>
+                                        <p>
+                                            <el-form-item label="状态：">
+                                                <el-switch
+                                                    v-model="props.row.status"
+                                                    active-color="#13ce66"
+                                                    inactive-color="#ff4949"
+                                                    :disabled='!pagePermission.SystemMenuUpdateStatus'
+                                                    @change="updateMenuStatus(props.row)">
+                                                </el-switch>
+                                            </el-form-item>
+                                        </p>
+                                        <el-collapse-transition>
+                                            <div class="transition-box" v-show="props.row.showMore">
+                                                <el-form-item label="排序码：" size="mini">
+                                                    <span>{{ props.row.displayOrder }}</span>
+                                                </el-form-item>
+                                                <p>
+                                                    <el-form-item label="创建人：" size="mini">
+                                                        <span>{{ props.row.createName ? props.row.createName : '-' }}
+                                                        </span>
+                                                    </el-form-item>
+                                                    <el-form-item label="创建时间：" size="mini">
+                                                        <span>{{ props.row.createTime ?
+                                                            $DateUtil.getDateTime(props.row.createTime) : '-' }}
+                                                        </span>
+                                                    </el-form-item>
+                                                </p>
+                                                <p>
+                                                    <el-form-item label="修改人：" size="mini">
+                                                        <span>{{ props.row.updateName ? props.row.updateName : '-' }}
+                                                        </span>
+                                                    </el-form-item>
+                                                    <el-form-item label="修改时间：" size="mini">
+                                                        <span>{{ props.row.updateTime ?
+                                                            $DateUtil.getDateTime(props.row.updateTime) : '-' }}
+                                                        </span>
+                                                    </el-form-item>
+                                                </p>
+
+                                            </div>
+                                        </el-collapse-transition>
+                                        <p>
+                                            <el-form-item size="mini">
+                                                <el-button type="primary" size="mini"
+                                                           :disabled="!pagePermission.SystemMenuUpdate"
+                                                           @click="openOrCloseMenuWindow(true, props.row)">
+                                                    编辑
+                                                </el-button>
+                                                <el-button type="danger" size="mini"
+                                                           :disabled="!pagePermission.SystemMenuDelete"
+                                                           @click="deleteMenu(props.row.id)">删除
+                                                </el-button>
+                                            </el-form-item>
+                                        </p>
+                                        <div align="center">
+                                            <el-button size="mini" :autofocus="true" plain :icon="props.row.icon"
+                                                       @click="seeMore(props.row)"
+                                                       style="width: 100%; background: #ecf5ff"></el-button>
+                                        </div>
+                                    </el-form>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-collapse-item>
+                </el-collapse>
             </div>
-            <div class="table-right">
-                <div class="header-top1">
-                    <span style="color: #000000">数据列表</span>
+
+            <!-- PC -->
+            <div v-else>
+                <div class="table-left border-r" style="min-width: 200px">
+                    <div class="header-top">
+                        <span style="color: #000000">菜单</span>
+                        <el-button class="btnbox-r fl-r" v-if="pagePermission.SystemMenuSave"
+                                   style="margin-top: 13px;"
+                                   type="primary" size="mini"
+                                   @click="openOrCloseMenuWindow(true)">新增菜单
+                        </el-button>
+                    </div>
+                    <div style="font-size: 16px" v-if="pagePermission.SystemMenuList">
+                        <el-tree ref="menuTree" :accordion="true" :props="menuTreeProps" :load="loadMenuTreeNode"
+                                 :data="menuTreeData" node-key="id"
+                                 lazy :highlight-current="true" @node-click="clickMenuTreeNode">
+                        </el-tree>
+                    </div>
+                    <div style="height: 50px; color: #909399; text-align:center; line-height: 50px" v-else>
+                        {{emptyText}}
+                    </div>
                 </div>
-                <div>
-                    <el-table :data="menuList" :border="true" style="width: 100%" row-key="id"
-                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
-                        <el-table-column label="编号" align="center" width="80">
-                            <template scope="scope">
-                                <span v-text="scope.$index+1"></span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="name" label="菜单名" align="center" width="100"></el-table-column>
-                        <el-table-column prop="url" label="URL" align="center"></el-table-column>
-                        <el-table-column prop="displayOrder" label="排序码" align="center" width="80"></el-table-column>
-                        <el-table-column prop="createTime" label="创建时间" align="center"
-                                         :formatter="$DateUtil.formatDateByTable" width="180"></el-table-column>
-                        <el-table-column prop="createName" label="创建人" align="center"
-                                         :formatter="$StringUtil.formatToStringByTable" width="150"></el-table-column>
-                        <el-table-column prop="updateTime" label="修改时间" align="center"
-                                         :formatter="$DateUtil.formatDateByTable" width="180"></el-table-column>
-                        <el-table-column prop="updateName" label="修改人" align="center"
-                                         :formatter="$StringUtil.formatToStringByTable" width="150"></el-table-column>
-                        <el-table-column prop="status" label="状态" align="center" width="80">
-                            <template slot-scope="scope">
-                                <el-switch
-                                    v-model="scope.row.status"
-                                    active-color="#13ce66"
-                                    inactive-color="#ff4949"
-                                    :disabled='!pagePermission.SystemMenuUpdateStatus'
-                                    @change="updateMenuStatus(scope.row)">
-                                </el-switch>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="操作" align="center" width="150">
-                            <template slot-scope="scope">
-                                <el-button type="primary" size="mini" :disabled="!pagePermission.SystemMenuUpdate"
-                                           @click="openOrCloseMenuWindow(true, scope.row)">
-                                    编辑
-                                </el-button>
-                                <el-button type="danger" size="mini" :disabled="!pagePermission.SystemMenuDelete"
-                                           @click="deleteMenu(scope.row.id)">删除
-                                </el-button>
-                            </template>
-                        </el-table-column>
-                    </el-table>
+                <div class="table-right">
+                    <div class="header-top1">
+                        <span style="color: #000000">数据列表</span>
+                    </div>
+                    <div>
+                        <el-table :data="menuList" :border="true" style="width: 100%" row-key="id"
+                                  :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                            <el-table-column label="编号" align="center" width="80">
+                                <template scope="scope">
+                                    <span v-text="scope.$index+1"></span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="name" label="菜单名" align="center" width="100"></el-table-column>
+                            <el-table-column prop="url" label="URL" align="center"></el-table-column>
+                            <el-table-column prop="displayOrder" label="排序码" align="center"
+                                             width="80"></el-table-column>
+                            <el-table-column prop="createTime" label="创建时间" align="center"
+                                             :formatter="$DateUtil.formatDateByTable" width="180"></el-table-column>
+                            <el-table-column prop="createName" label="创建人" align="center"
+                                             :formatter="$StringUtil.formatToStringByTable"
+                                             width="150"></el-table-column>
+                            <el-table-column prop="updateTime" label="修改时间" align="center"
+                                             :formatter="$DateUtil.formatDateByTable" width="180"></el-table-column>
+                            <el-table-column prop="updateName" label="修改人" align="center"
+                                             :formatter="$StringUtil.formatToStringByTable"
+                                             width="150"></el-table-column>
+                            <el-table-column prop="status" label="状态" align="center" width="80">
+                                <template slot-scope="scope">
+                                    <el-switch
+                                        v-model="scope.row.status"
+                                        active-color="#13ce66"
+                                        inactive-color="#ff4949"
+                                        :disabled='!pagePermission.SystemMenuUpdateStatus'
+                                        @change="updateMenuStatus(scope.row)">
+                                    </el-switch>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" align="center" width="150">
+                                <template slot-scope="scope">
+                                    <el-button type="primary" size="mini"
+                                               :disabled="!pagePermission.SystemMenuUpdate"
+                                               @click="openOrCloseMenuWindow(true, scope.row)">
+                                        编辑
+                                    </el-button>
+                                    <el-button type="danger" size="mini"
+                                               :disabled="!pagePermission.SystemMenuDelete"
+                                               @click="deleteMenu(scope.row.id)">删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!--表单-->
-        <el-dialog :title="menuForm.menuFormTitle" :visible.sync="menuForm.openOrClose" width="60%" top="10vh">
+        <el-dialog :title="menuForm.menuFormTitle" :visible.sync="menuForm.openOrClose" :width=" isPc ? '60%' : '90%'"
+                   :top=" isPc ? '10vh' : '5vh'">
             <el-form :model="menuForm" :rules="menuFormRules" ref="menuForm">
                 <el-form-item label="父菜单" prop="parentId">
                     <span>{{menuForm.parentPath === "" ? "顶级菜单" : menuForm.parentPath}}</span>
@@ -200,6 +323,12 @@
                 }
             };
             return {
+                //是否是PC端
+                isPc: true,
+                //移动端显示内容
+                activeName: '2',
+                //
+                choseParentPath: '顶级菜单',
                 //页面按钮权限(权限url首字母大写,否则不能动态修改)
                 pagePermission: {
                     SystemMenuList: false,
@@ -219,7 +348,7 @@
                     {
                         id: 0,
                         name: "顶级菜单",
-                        parentId: '',
+                        parentId: -1,
                         children: [],
                         hasChildren: false
                     }
@@ -296,12 +425,35 @@
             },
         },
         async mounted() {
+            this.isPc = this.$IsPC();
             //页面按钮权限(权限url首字母大写,否则不能动态修改)
             await this.$GetAccountMenuPermission(this.pagePermission);
             //加载菜单列表
             this.loadMenuList();
         },
         methods: {
+            /**
+             * @Description : 移动端查看更多
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 15:02
+             */
+            seeMore(item) {
+                item.showMore = !item.showMore;
+                if (item.showMore) {
+                    item.icon = "el-icon-arrow-up";
+                } else {
+                    item.icon = "el-icon-arrow-down";
+                }
+            },
+            /**
+             * @Description :
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 14:42
+             * @Param
+             */
+            doSearch() {
+                this.activeName = '2';
+            },
             /**
              * @Description : 懒加载菜单树节点
              * @Author : cheng fei
@@ -393,6 +545,9 @@
                 this.menuTreeLoadNode = node;
                 this.selectMenuTreeNode = this.$ObjectUtil.isBlank(data) ? "" : data;
                 this.loadMenuList();
+                if (!this.isPc) {
+                    this.choseParentPath = this.$TreeUtil.getAllParentNodePathById(data.id, this.menuTreeData, "id", "parentId", "children", "name", true);
+                }
             },
             /**
              * @Description : 加载菜单列表
@@ -414,7 +569,15 @@
                         },
                         function (self, data) {
                             if (self.$ObjectUtil.isNotBlank(data.data)) {
-                                self.menuList = data.data
+                                self.menuList = data.data;
+                                if (!self.isPc) {
+                                    if (self.menuList && self.menuList.length > 0) {
+                                        self.menuList.forEach((item) => {
+                                            self.$set(item, 'showMore', false);
+                                            self.$set(item, 'icon', 'el-icon-arrow-down')
+                                        })
+                                    }
+                                }
                             } else {
                                 self.menuList = []
                             }
@@ -526,7 +689,7 @@
              * @CreateDate 2019/5/28 15:57
              * @Param menu 菜单
              */
-            doUpdateMenuStatus(menu){
+            doUpdateMenuStatus(menu) {
                 this.$Http.doPostForForm(
                     this,
                     "system/menu/update/status",

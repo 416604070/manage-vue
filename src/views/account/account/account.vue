@@ -4,147 +4,149 @@
         <div>
             <!-- 移动端 -->
             <div v-if="!isPc">
-                <el-collapse v-model="activeName" accordion >
-                <!-- 筛选条件 -->
-                <el-collapse-item name="1">
-                    <template slot="title">
-                        <span style="padding-left: 5px;font-size: 2vh;">数据筛选</span>
-                    </template>
-                    <el-form label-position="left" inline class="demo-table-expand" style="margin-left: 7vw">
-                        <el-form-item label="用户名：" size="mini">
-                            <el-input v-model="query.username" placeholder="请输入用户名" clearable></el-input>
-                        </el-form-item>
-                        <el-form-item label="姓名：" size="mini">
-                            <el-input v-model="query.name" placeholder="请输入姓名" clearable></el-input>
-                        </el-form-item>
-                        <el-form-item label="手机号：" size="mini">
-                            <el-input v-model="query.phone" placeholder="请输入手机号" clearable></el-input>
-                        </el-form-item>
-                        <el-form-item label="邮箱：" size="mini">
-                            <el-input v-model="query.email" placeholder="请输入邮箱" clearable></el-input>
-                        </el-form-item>
-                        <el-form-item label="角色：" size="mini">
-                            <el-select v-model="query.roleId" placeholder="请选择">
-                                <el-option value="" label="全部"></el-option>
-                                <el-option
-                                    v-for="item in roleCheckboxData"
-                                    :key="item.id"
-                                    :label="item.name"
-                                    :value="item.id">
-                                </el-option>
-                            </el-select>
-                        </el-form-item>
-                        <el-form-item label="每页显示记录数：" size="mini">
-                            <el-select v-model="pageSize" placeholder="请选择" style="width: 15vw">
-                                <el-option value="3" label="3"></el-option>
-                                <el-option value="5" label="5"></el-option>
-                                <el-option value="10" label="10"></el-option>
-                                <el-option value="15" label="15"></el-option>
-                                <el-option value="20" label="20"></el-option>
-                                <el-option value="50" label="50"></el-option>
-                            </el-select>
-                        </el-form-item>
-                        <el-button type="primary" size="small" @click="doSearch()"
-                                   style="margin-left: 1vw;">查询
-                        </el-button>
-                    </el-form>
-                </el-collapse-item>
+                <el-collapse v-model="activeName" accordion>
+                    <!-- 筛选条件 -->
+                    <el-collapse-item name="1">
+                        <template slot="title">
+                            <span style="padding-left: 5px;font-size: 2vh;">数据筛选</span>
+                        </template>
+                        <el-form label-position="left" inline class="demo-table-expand" style="margin-left: 7vw">
+                            <el-form-item label="用户名：" size="mini">
+                                <el-input v-model="query.username" placeholder="请输入用户名" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="姓名：" size="mini">
+                                <el-input v-model="query.name" placeholder="请输入姓名" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="手机号：" size="mini">
+                                <el-input v-model="query.phone" placeholder="请输入手机号" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="邮箱：" size="mini">
+                                <el-input v-model="query.email" placeholder="请输入邮箱" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="角色：" size="mini">
+                                <el-select v-model="query.roleId" placeholder="请选择">
+                                    <el-option value="" label="全部"></el-option>
+                                    <el-option
+                                        v-for="item in roleCheckboxData"
+                                        :key="item.id"
+                                        :label="item.name"
+                                        :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="每页显示记录数：" size="mini">
+                                <el-select v-model="pageSize" placeholder="请选择" style="width: 20vw">
+                                    <el-option value=3 label=3></el-option>
+                                    <el-option value=5 label=5></el-option>
+                                    <el-option value=10  label=10></el-option>
+                                    <el-option value=15  label=15></el-option>
+                                    <el-option value=20  label=20></el-option>
+                                    <el-option value=50  label=50></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-button type="primary" size="small" @click="doSearch()"
+                                       style="margin-left: 1vw;">查询
+                            </el-button>
+                        </el-form>
+                    </el-collapse-item>
 
-                <!-- 数据列表 -->
-                <el-collapse-item name="2">
-                    <template slot="title">
-                        <span style="padding-left: 5px;font-size: 2vh">数据列表</span>
-                    </template>
-                    <el-table :data="accountList" :show-header="false" border :border="true"
-                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
-                        <el-table-column>
-                            <template slot-scope="props">
-                                <el-form label-position="left" inline class="demo-table-expand">
-                                    <el-form-item label="用户名：" size="mini">
-                                        <span>{{ props.row.username }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="姓名：" size="mini">
-                                        <span>{{ props.row.name }}</span>
-                                    </el-form-item>
-                                    <el-form-item label="角色：" size="mini">
-                                        <p v-for="role in props.row.roles"><span>{{ role.name }}</span></p>
-                                    </el-form-item>
-                                    <p>
-                                        <el-form-item label="状态：">
-                                            <el-switch
-                                                v-model="props.row.status"
-                                                active-color="#13ce66"
-                                                inactive-color="#ff4949"
-                                                :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdateStatus"
-                                                @change="updateAccountStatus(props.row)">
-                                            </el-switch>
+                    <!-- 数据列表 -->
+                    <el-collapse-item name="2">
+                        <template slot="title">
+                            <span style="padding-left: 5px;font-size: 2vh">数据列表</span>
+                        </template>
+                        <el-table :data="accountList" :show-header="false" border :border="true"
+                                  :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                            <el-table-column>
+                                <template slot-scope="props">
+                                    <el-form label-position="left" inline class="demo-table-expand">
+                                        <el-form-item label="用户名：" size="mini">
+                                            <span>{{ props.row.username }}</span>
                                         </el-form-item>
-                                    </p>
-                                    <el-collapse-transition>
-                                        <div class="transition-box" v-show="props.row.showMore">
-                                            <el-form-item label="手机号：" size="mini">
-                                                <span>{{ props.row.phone ? props.row.phone : '-' }}</span>
+                                        <el-form-item label="姓名：" size="mini">
+                                            <span>{{ props.row.name }}</span>
+                                        </el-form-item>
+                                        <el-form-item label="角色：" size="mini">
+                                            <p v-for="role in props.row.roles"><span>{{ role.name }}</span></p>
+                                        </el-form-item>
+                                        <p>
+                                            <el-form-item label="状态：">
+                                                <el-switch
+                                                    v-model="props.row.status"
+                                                    active-color="#13ce66"
+                                                    inactive-color="#ff4949"
+                                                    :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdateStatus"
+                                                    @change="updateAccountStatus(props.row)">
+                                                </el-switch>
                                             </el-form-item>
-                                            <el-form-item label="邮箱：" size="mini">
-                                                <span>{{ props.row.email ? props.row.email : '-' }}</span>
-                                            </el-form-item>
-                                            <p>
-                                                <el-form-item label="创建人：" size="mini">
-                                                    <span>{{ props.row.createName ? props.row.createName : '-' }}</span>
+                                        </p>
+                                        <el-collapse-transition>
+                                            <div class="transition-box" v-show="props.row.showMore">
+                                                <el-form-item label="手机号：" size="mini">
+                                                    <span>{{ props.row.phone ? props.row.phone : '-' }}</span>
                                                 </el-form-item>
-                                                <el-form-item label="创建时间：" size="mini">
-                                                    <span>{{ props.row.createTime ? $DateUtil.getDateTime(props.row.createTime) : '-' }}</span>
+                                                <el-form-item label="邮箱：" size="mini">
+                                                    <span>{{ props.row.email ? props.row.email : '-' }}</span>
                                                 </el-form-item>
-                                            </p>
-                                            <p>
-                                                <el-form-item label="修改人：" size="mini">
-                                                    <span>{{ props.row.updateName ? props.row.updateName : '-' }}</span>
-                                                </el-form-item>
-                                                <el-form-item label="修改时间：" size="mini">
-                                                    <span>{{ props.row.updateTime ? $DateUtil.getDateTime(props.row.updateTime) : '-' }}</span>
-                                                </el-form-item>
-                                            </p>
+                                                <p>
+                                                    <el-form-item label="创建人：" size="mini">
+                                                        <span>{{ props.row.createName ? props.row.createName : '-' }}</span>
+                                                    </el-form-item>
+                                                    <el-form-item label="创建时间：" size="mini">
+                                                        <span>{{ props.row.createTime ? $DateUtil.getDateTime(props.row.createTime) : '-' }}</span>
+                                                    </el-form-item>
+                                                </p>
+                                                <p>
+                                                    <el-form-item label="修改人：" size="mini">
+                                                        <span>{{ props.row.updateName ? props.row.updateName : '-' }}</span>
+                                                    </el-form-item>
+                                                    <el-form-item label="修改时间：" size="mini">
+                                                        <span>{{ props.row.updateTime ? $DateUtil.getDateTime(props.row.updateTime) : '-' }}</span>
+                                                    </el-form-item>
+                                                </p>
 
+                                            </div>
+                                        </el-collapse-transition>
+                                        <p>
+                                            <el-form-item size="mini">
+                                                <el-button type="text" size="small"
+                                                           @click="openOrCloseAccountWindow(true)"
+                                                           style="margin-left: 1vw;"
+                                                           v-if="pagePermission.AccountAccountSave">新增账号
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdatePassword"
+                                                           @click="openOrCloseResetPasswordWindow(true, props.row)">
+                                                    重置密码
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdateRole"
+                                                           @click="openOrCloseResetRoleWindow(true, props.row)">
+                                                    设置角色
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdate"
+                                                           @click="openOrCloseAccountWindow(true, props.row)">
+                                                    编辑
+                                                </el-button>
+                                                <el-button type="text" size="mini"
+                                                           :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountDelete"
+                                                           @click="deleteAccount(props.row.id)">
+                                                    删除
+                                                </el-button>
+                                            </el-form-item>
+                                        </p>
+                                        <div align="center">
+                                            <el-button size="mini" :autofocus="true" plain :icon="props.row.icon"
+                                                       @click="seeMore(props.row)"
+                                                       style="width: 100%; background: #ecf5ff"></el-button>
                                         </div>
-                                    </el-collapse-transition>
-                                    <p>
-                                        <el-form-item size="mini">
-                                            <el-button type="text" size="small"
-                                                       @click="openOrCloseAccountWindow(true)"
-                                                       style="margin-left: 1vw;"
-                                                       v-if="pagePermission.AccountAccountSave">新增账号
-                                            </el-button>
-                                            <el-button type="text" size="mini"
-                                                       :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdatePassword"
-                                                       @click="openOrCloseResetPasswordWindow(true, props.row)">
-                                                重置密码
-                                            </el-button>
-                                            <el-button type="text" size="mini"
-                                                       :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdateRole"
-                                                       @click="openOrCloseResetRoleWindow(true, props.row)">
-                                                设置角色
-                                            </el-button>
-                                            <el-button type="text" size="mini"
-                                                       :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountUpdate"
-                                                       @click="openOrCloseAccountWindow(true, props.row)">
-                                                编辑
-                                            </el-button>
-                                            <el-button type="text" size="mini"
-                                                       :disabled="disabledButton(props.row.username) || !pagePermission.AccountAccountDelete"
-                                                       @click="deleteAccount(props.row.id)">
-                                                删除
-                                            </el-button>
-                                        </el-form-item>
-                                    </p>
-                                    <div align="center">
-                                        <el-button size="mini" :autofocus="true" plain :icon="props.row.icon" @click="seeMore(props.row)" style="width: 100%; background: #ecf5ff"></el-button>
-                                    </div>
-                                </el-form>
-                            </template>
-                        </el-table-column>
-                    </el-table>
-                </el-collapse-item>
-            </el-collapse>
+                                    </el-form>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-collapse-item>
+                </el-collapse>
             </div>
             <!-- PC -->
             <div style="min-width: 1220px" v-else>
@@ -155,7 +157,8 @@
                     <div style="height: 6.5vh;min-height: 51px">
                         <div class="search_div" style="margin: 1.3vh 1vw">
                             <span style="color: #000000;font-size: 1.6vh">用户名：</span>
-                            <el-input v-model="query.username" placeholder="请输入用户名" @change="loadAccountList(true)" clearable
+                            <el-input v-model="query.username" placeholder="请输入用户名" @change="loadAccountList(true)"
+                                      clearable
                                       style="width: 10vw"></el-input>
                         </div>
                         <div class="search_div" style="margin: 1.3vh 1vw">
@@ -165,12 +168,14 @@
                         </div>
                         <div class="search_div" style="margin: 1.3vh 1vw">
                             <span style="color: #000000;font-size: 1.6vh">手机号：</span>
-                            <el-input v-model="query.phone" placeholder="请输入手机号" @change="loadAccountList(true)" clearable
+                            <el-input v-model="query.phone" placeholder="请输入手机号" @change="loadAccountList(true)"
+                                      clearable
                                       style="width: 10vw"></el-input>
                         </div>
                         <div class="search_div" style="margin: 1.3vh 1vw">
                             <span style="color: #000000;font-size: 1.6vh">邮箱：</span>
-                            <el-input v-model="query.email" placeholder="请输入邮箱" @change="loadAccountList(true)" clearable
+                            <el-input v-model="query.email" placeholder="请输入邮箱" @change="loadAccountList(true)"
+                                      clearable
                                       style="width: 10vw"></el-input>
                         </div>
                         <div class="search_div" style="margin: 1.3vh 1vw">
@@ -771,6 +776,16 @@
                 }
             },
         },
+        watch : {
+            pageSize : function (newValue, oldValue) {
+                const re = /^[1-9]+[0-9]*]*$/;
+                if (!re.test(newValue)) {
+                    this.pageSize = oldValue
+                } else {
+                   this.pageSize = parseInt(newValue)
+                }
+            }
+        },
         async mounted() {
             this.isPc = this.$IsPC();
             this.pageSize = this.isPc ? 10 : 5;
@@ -781,7 +796,7 @@
             //加载角色下拉列表
             this.loadRoleCheckbox();
         },
-        methods :{
+        methods: {
             /**
              * @Description :
              * @Author : cheng fei
@@ -889,10 +904,12 @@
                             self.total = data.data.count;
                             if (!self.isPc) {
                                 self.activeName = '2';
-                                self.accountList.forEach((item) => {
-                                    self.$set(item, 'showMore', false);
-                                    self.$set(item, 'icon', 'el-icon-arrow-down')
-                                })
+                                if (self.accountList && self.accountList.length > 0) {
+                                    self.accountList.forEach((item) => {
+                                        self.$set(item, 'showMore', false);
+                                        self.$set(item, 'icon', 'el-icon-arrow-down')
+                                    })
+                                }
                             }
                         }
                     )
@@ -904,6 +921,7 @@
              * @CreateDate 2019/4/27 14:25
              */
             handleSizeChange(pageSize) {
+                this.currentPage = 1;
                 this.pageSize = pageSize;
                 this.loadAccountList();
             },

@@ -7,7 +7,8 @@
                 <h2>前言</h2>
                 <p><strong>基于Vue.js 2.x系列 + Element UI 的后台管理系统</strong></p>
                 <p><strong>后端采用java springboot + shiro + redis 缓存</strong></p>
-                <p><strong>未经过严格测试,如使用请自行测试，各位大佬如发现BUG或对项目有其他意见或建议请联系583832983@qq.com，谢谢！</strong></p>
+                <p><strong>已适配移动端，前端水平有限，如使用，请自行优化！</strong></p>
+                <p><strong>未经过严格测试,如使用请自行测试，该项目用于学习springboot， shiro，vue而搭建，有诸多不足之处，各位大佬如发现BUG或对项目有其他意见或建议请联系583832983@qq.com，谢谢！</strong></p>
                 <h2>功能</h2>
                 <el-checkbox disabled checked>登录</el-checkbox>
                 <br>

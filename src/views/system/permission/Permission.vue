@@ -1,6 +1,135 @@
 <template>
     <div>
-        <div>
+        <!-- 移动端 -->
+        <div v-if="!isPc">
+            <el-collapse v-model="activeName" accordion>
+                <!-- 筛选条件 -->
+                <el-collapse-item name="1">
+                    <template slot="title">
+                        <span style="padding-left: 5px;font-size: 2vh;">菜单：{{choseParentPath}}</span>
+                    </template>
+                    <el-form label-position="left" inline class="demo-table-expand" style="margin-left: 7vw">
+                        <el-form-item label="" size="mini">
+                            <div style="font-size: 16px" v-if="pagePermission.SystemPermissionList">
+                                <el-tree ref="menuTree" :accordion="true" :props="menuTreeProps"
+                                         :load="loadMenuTreeNode"
+                                         :data="menuTreeData" node-key="id" :empty-text="emptyText"
+                                         lazy :highlight-current="true" @node-click="clickMenuTreeNode">
+                                </el-tree>
+                            </div>
+                        </el-form-item>
+                        <p>
+                        <el-form-item label="每页显示记录数：" size="mini">
+                            <el-select v-model="pageSize" placeholder="请选择" @change="handleSizeChange" style="width: 20vw">
+                                <el-option value=3 label=3></el-option>
+                                <el-option value=5 label=5></el-option>
+                                <el-option value=0 label=10></el-option>
+                                <el-option value=15 label=15></el-option>
+                                <el-option value=20 label=20></el-option>
+                                <el-option value=50 label=50></el-option>
+                            </el-select>
+                        </el-form-item>
+                        </p>
+                        <p>
+                            <el-button type="primary" size="mini" @click="doSearch()"
+                                       style="margin-left: 1vw;">查看权限列表
+                            </el-button>
+                            <el-button type="primary"
+                                       size="mini" v-if="pagePermission.SystemPermissionSave"
+                                       @click="openOrClosePermissionListWindow(true)">新增权限
+                            </el-button>
+                        </p>
+
+                    </el-form>
+                </el-collapse-item>
+
+                <!-- 数据列表 -->
+                <el-collapse-item name="2">
+                    <template slot="title">
+                        <span style="padding-left: 5px;font-size: 2vh">菜单列表</span>
+                    </template>
+                    <el-table :data="permissionList" :border="true" :show-header="false" style="width: 100%"
+                              row-key="id"
+                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                        <el-table-column>
+                            <template slot-scope="props">
+                                <el-form label-position="left" inline class="demo-table-expand">
+                                    <el-form-item label="权限名称：" size="mini">
+                                        <span>{{ props.row.name }}</span>
+                                    </el-form-item>
+                                    <el-form-item label="URL：" size="mini">
+                                        <span>{{ props.row.url }}</span>
+                                    </el-form-item>
+                                    <p>
+                                        <el-form-item label="状态：">
+                                            <el-switch
+                                                v-model="props.row.status"
+                                                active-color="#13ce66"
+                                                inactive-color="#ff4949"
+                                                :disabled='!pagePermission.SystemPermissionUpdateStatus'
+                                                @change="updatePermissionStatus(props.row)">
+                                            </el-switch>
+                                        </el-form-item>
+                                    </p>
+                                    <el-collapse-transition>
+                                        <div class="transition-box" v-show="props.row.showMore">
+                                            <el-form-item label="排序码：" size="mini">
+                                                <span>{{ props.row.displayOrder }}</span>
+                                            </el-form-item>
+                                            <p>
+                                                <el-form-item label="创建人：" size="mini">
+                                                        <span>{{ props.row.createName ? props.row.createName : '-' }}
+                                                        </span>
+                                                </el-form-item>
+                                                <el-form-item label="创建时间：" size="mini">
+                                                        <span>{{ props.row.createTime ?
+                                                            $DateUtil.getDateTime(props.row.createTime) : '-' }}
+                                                        </span>
+                                                </el-form-item>
+                                            </p>
+                                            <p>
+                                                <el-form-item label="修改人：" size="mini">
+                                                        <span>{{ props.row.updateName ? props.row.updateName : '-' }}
+                                                        </span>
+                                                </el-form-item>
+                                                <el-form-item label="修改时间：" size="mini">
+                                                        <span>{{ props.row.updateTime ?
+                                                            $DateUtil.getDateTime(props.row.updateTime) : '-' }}
+                                                        </span>
+                                                </el-form-item>
+                                            </p>
+                                            <el-form-item label="备注：" size="mini">
+                                                <span>{{ props.row.remark }}</span>
+                                            </el-form-item>
+                                        </div>
+                                    </el-collapse-transition>
+                                    <p>
+                                        <el-form-item size="mini">
+                                            <el-button type="primary" size="mini"
+                                                       :disabled="!pagePermission.SystemPermissionUpdate"
+                                                       @click="openOrClosePermissionListWindow(true, props.row)">
+                                                编辑
+                                            </el-button>
+                                            <el-button type="danger" size="mini"
+                                                       :disabled="!pagePermission.SystemPermissionDelete"
+                                                       @click="deletePermission(props.row.id)">删除
+                                            </el-button>
+                                        </el-form-item>
+                                    </p>
+                                    <div align="center">
+                                        <el-button size="mini" :autofocus="true" plain :icon="props.row.icon"
+                                                   @click="seeMore(props.row)"
+                                                   style="width: 100%; background: #ecf5ff"></el-button>
+                                    </div>
+                                </el-form>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-collapse-item>
+            </el-collapse>
+        </div>
+        <!-- Pc -->
+        <div v-else>
             <div class="table-left border-r">
                 <div class="header-top">
                     <span style="color: #000000">菜单列表</span>
@@ -24,7 +153,8 @@
                     </el-button>
                 </div>
                 <div>
-                    <el-table :data="permissionList" :border="true" style="width: 100%" row-key="id" :row-class-name="$TableRowClassName" :empty-text="emptyText">
+                    <el-table :data="permissionList" :border="true" style="width: 100%" row-key="id"
+                              :row-class-name="$TableRowClassName" :empty-text="emptyText">
                         <el-table-column label="编号" align="center" width="50">
                             <template scope="scope">
                                 <span v-text="scope.$index+1"></span>
@@ -60,13 +190,31 @@
                                            @click="openOrClosePermissionListWindow(true, scope.row)">
                                     编辑
                                 </el-button>
-                                <el-button type="danger" size="mini"  :disabled="!pagePermission.SystemPermissionDelete"
+                                <el-button type="danger" size="mini" :disabled="!pagePermission.SystemPermissionDelete"
                                            @click="deletePermission(scope.row.id)">删除
                                 </el-button>
                             </template>
                         </el-table-column>
                     </el-table>
                 </div>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div>
+            <div style="float: right; margin-right: 3vw; margin-top: 2vh;">
+                <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[5, 10, 20, 50, 100]"
+                    :page-size="pageSize"
+                    :layout=" isPc ? 'total, sizes, prev, pager, next, jumper' : 'prev, pager, next'"
+                    :small="!isPc"
+                    :total="total"
+                    prev-text="上一页"
+                    next-text="下一页">
+                </el-pagination>
             </div>
         </div>
 
@@ -205,13 +353,19 @@
                 }
             };
             return {
+                //是否是移动端
+                isPc: true,
+                //移动端显示
+                activeName: '2',
+                //移动端选中菜单的地址
+                choseParentPath: '',
                 //页面按钮权限(权限url首字母大写,否则不能动态修改)
-                pagePermission : {
-                    SystemPermissionList : false,
-                    SystemPermissionSave : false,
-                    SystemPermissionUpdateStatus : false,
-                    SystemPermissionUpdate : false,
-                    SystemPermissionDelete : false
+                pagePermission: {
+                    SystemPermissionList: false,
+                    SystemPermissionSave: false,
+                    SystemPermissionUpdateStatus: false,
+                    SystemPermissionUpdate: false,
+                    SystemPermissionDelete: false
                 },
 
                 //菜单树属性设置
@@ -282,12 +436,17 @@
                 updateMenuPath: "",
                 updateMenuTreeDate: [],
                 //修改菜单树的选中节点
-                updateMenuNode: null
+                updateMenuNode: null,
+
+                //分页
+                currentPage : 1,
+                pageSize : 10,
+                total : 0,
             }
         },
-        computed : {
+        computed: {
             //数据为空时描述
-            emptyText(){
+            emptyText() {
                 if (this.pagePermission.SystemPermissionList) {
                     return "暂无数据"
                 } else {
@@ -295,17 +454,79 @@
                 }
             }
         },
+        watch : {
+            pageSize : function (newValue, oldValue) {
+                const re = /^[1-9]+[0-9]*]*$/;
+                if (!re.test(newValue)) {
+                    this.pageSize = oldValue
+                } else {
+                    this.pageSize = parseInt(newValue)
+                }
+            }
+        },
         mounted() {
+            this.isPc = this.$IsPC();
+            this.pageSize = this.isPc ? 10 : 5;
             //获取页面按钮权限
             this.$GetAccountMenuPermission(this.pagePermission)
         },
         methods: {
+            /**
+             * @Description : 移动得管查看更多
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 16:09
+             * @Param item 当前选中数据
+             */
+            seeMore(item) {
+                item.showMore = !item.showMore;
+                if (item.showMore) {
+                    item.icon = "el-icon-arrow-up";
+                } else {
+                    item.icon = "el-icon-arrow-down";
+                }
+            },
+            /**
+             * @Description : 查看权限列表
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 15:53
+             */
+            doSearch() {
+                this.activeName = '2';
+            },
+            changePageSize(){
+                this.currentPage = 1;
+                this.loadPermissionList();
+            },
+            /**
+             * @Description : 修改分页加载条数
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 16:10
+             * @Param pageSize 每页显示条数
+             */
+            handleSizeChange(pageSize){
+                this.currentPage = 1;
+                if (this.isPc) {
+                    this.pageSize = pageSize;
+                }
+                this.loadPermissionList();
+            },
+            /**
+             * @Description : 改变当前页码
+             * @Author : cheng fei
+             * @CreateDate 2019/5/30 16:13
+             * @Param page 页码
+             */
+            handleCurrentChange(page){
+                this.currentPage = page;
+                this.loadPermissionList();
+            },
             /**
              * @Description : 懒加载菜单树节点
              * @Author : cheng fei
              * @CreateDate 2019/3/30 0:29
              * @Param
              */
+
             loadMenuTreeNode(node, resolve) {
                 let parentId = "";
                 if (node.level === 0) {
@@ -384,8 +605,11 @@
             clickMenuTreeNode(data, node) {
                 this.menuTreeLoadNode = node;
                 this.selectMenuTreeNode = this.$ObjectUtil.isBlank(data) ? "" : data;
-                if (node.expanded || node.childNodes.length === 0){
+                if (node.expanded || node.childNodes.length === 0) {
                     this.loadPermissionList();
+                    if (!this.isPc) {
+                        this.choseParentPath = this.$TreeUtil.getAllParentNodePathById(data.id, this.menuTreeData, "id", "parentId", "children", "name", true);
+                    }
                 }
             },
             /**
@@ -400,11 +624,22 @@
                         this,
                         "/system/permission/list",
                         {
-                            menuId: this.selectMenuTreeNode.id
+                            menuId: this.selectMenuTreeNode.id,
+                            page: this.currentPage,
+                            pageSize: this.pageSize
                         },
                         function (self, data) {
                             if (self.$ObjectUtil.isNotBlank(data.data)) {
-                                self.permissionList = data.data;
+                                self.permissionList = data.data.rows;
+                                self.total = data.data.count;
+                                if (!self.isPc) {
+                                    if (self.permissionList && self.permissionList.length > 0) {
+                                        self.permissionList.forEach((item) => {
+                                            self.$set(item, 'showMore', false);
+                                            self.$set(item, 'icon', 'el-icon-arrow-down')
+                                        })
+                                    }
+                                }
                             } else {
                                 self.permissionList = []
                             }
@@ -518,7 +753,7 @@
              * @CreateDate 2019/5/28 17:25
              * @Param  permission 权限
              */
-            doUpdatePermissionStatus (permission) {
+            doUpdatePermissionStatus(permission) {
                 this.$Http.doPostForForm(
                     this,
                     "system/permission/update/status",
