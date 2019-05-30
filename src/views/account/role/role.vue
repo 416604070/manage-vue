@@ -205,7 +205,8 @@
         </div>
 
         <!-- 表单 -->
-        <el-dialog :title="roleForm.roleFormTitle" :visible.sync="roleForm.openOrClose" :width="isPc ? '60%' : '90%'" top="10vh">
+        <el-dialog :title="roleForm.roleFormTitle" :visible.sync="roleForm.openOrClose" :width="isPc ? '60%' : '90%'"
+                   top="10vh">
             <el-form :model="roleForm" :rules="roleFormRules" ref="roleForm">
                 <el-form-item label="角色名称" prop="name">
                     <el-input type="text" v-model="roleForm.name" auto-complete="off"></el-input>
@@ -224,7 +225,8 @@
         </el-dialog>
 
         <!-- 权限设置 -->
-        <el-dialog :title="menuPermissionWindowTitle" :visible.sync="menuPermissionWindow" :width=" isPc ? '50%' : '90%'" :top="isPc ? '10vh' : '2vh'">
+        <el-dialog :title="menuPermissionWindowTitle" :visible.sync="menuPermissionWindow"
+                   :width=" isPc ? '50%' : '90%'" :top="isPc ? '10vh' : '2vh'">
             <el-tree ref="menuPermissionTree" :props="menuPermissionTreeProps"
                      :render-content="menuPermissionTreeRenderContent"
                      :data="menuPermissionTreeData" node-key="id" :show-checkbox="true" :default-expand-all="true">
@@ -378,8 +380,8 @@
                 }
             },
         },
-        watch : {
-            pageSize : function (newValue, oldValue) {
+        watch: {
+            pageSize: function (newValue, oldValue) {
                 const re = /^[1-9]+[0-9]*]*$/;
                 if (!re.test(newValue)) {
                     this.pageSize = oldValue
@@ -443,7 +445,7 @@
                             self.total = data.data.count;
                             if (!self.isPc) {
                                 self.activeName = '2';
-                                if (self.roleList && self.roleList.length >0){
+                                if (self.roleList && self.roleList.length > 0) {
                                     self.roleList.forEach((item) => {
                                         self.$set(item, 'showMore', false)
                                         self.$set(item, 'icon', 'el-icon-arrow-down')
@@ -680,6 +682,7 @@
              * @CreateDate 2019/4/28 23:03
              */
             openOrCloseRolePermissionWindow(value, role) {
+                this.menuPermissionWindow = value;
                 if (value) {
                     //开启窗口
                     this.menuPermissionWindowTitle = '【 ' + role.name + ' 】- 权限设置';
@@ -694,9 +697,8 @@
                     this.menuPermissionWindowTitle = "";
                     this.chooseRoleId = "";
                     this.rolePermissionData = [];
-                    this.menuPermissionTreeData = [];
+                    // this.menuPermissionTreeData = [];
                 }
-                this.menuPermissionWindow = value;
             },
             /**
              * @Description : 加载权限树
