@@ -15,6 +15,9 @@ const config = {
     serverUrl : "http://112.74.183.118:8080/",
     // serverUrl : "https://manage.service.chengfei.top/",
 
+    //文件回调地址
+    fileServerURL : 'http://112.74.183.118:9999/',
+
     /**
      * 请求超时时间
      */
@@ -39,6 +42,14 @@ const config = {
     administrator : 'admin',
     //移动端系统
     MobileTerminalSystem : ["Android", "iPhone", "SymbianOS", "Windows Phone", "iPad", "iPod"],
+
+    //阿里云oss配置
+    aliyunOss : {
+        accessKeyId: 'your access key',
+        accessKeySecret: 'your access secret',
+        bucket: 'your bucket name',
+        region: 'oss-cn-hangzhou'
+    }
 
 };
 

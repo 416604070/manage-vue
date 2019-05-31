@@ -592,12 +592,11 @@
              * @Param
              */
             openOrCloseMenuWindow(value, data) {
-                this.menuForm.openOrClose = value;
                 if (value) {
                     //开启表单
-
                     if (this.$ObjectUtil.isNotBlank(data)) {
                         //修改菜单
+                        this.menuForm.openOrClose = value;
                         this.menuForm.menuFormTitle = "修改菜单";
                         this.menuForm.id = data.id;
                         this.menuForm.parentId = data.parentId;
@@ -609,6 +608,17 @@
                     } else {
                         //添加菜单
                         this.menuForm.menuFormTitle = "添加菜单";
+                        if (this.$ObjectUtil.isBlank(this.selectMenuTreeNode)){
+                            this.$confirm("未选中父菜单！", '错误', {
+                                confirmButtonText: '确定',
+                                showCancelButton: false,
+                                type: 'error',
+                                showClose: true,
+                            }).then(() => {
+                            });
+                            return;
+                        }
+                        this.menuForm.openOrClose = value;
                         this.menuForm.parentId = this.$ObjectUtil.isBlank(this.selectMenuTreeNode) ? 0 : this.selectMenuTreeNode.id;
                         //获取父节点地址
                         if (this.$ObjectUtil.isNotBlank(this.selectMenuTreeNode)) {
@@ -618,6 +628,7 @@
 
                 } else {
                     //关闭表单,重置数据
+                    this.menuForm.openOrClose = value;
                     this.menuForm.openOrClose = false;
                     this.menuForm.menuFormTitle = "";
                     this.menuForm.parentPath = "";

@@ -53,7 +53,7 @@
 </template>
 
 <script>
-    import UUIDUtil from "../../utils/UUID/UUIDUtil";
+    import { createUUID } from "../../utils/UUID/UUIDUtil";
     import getLoginParam from "../../utils/login/LoginParamUtil";
 
 
@@ -109,7 +109,7 @@
              */
             changeCode: function () {
                 let img = document.getElementById("code_img");
-                this.ruleForm.key = UUIDUtil.getRandomUUID();
+                this.ruleForm.key = createUUID();
                 img.src = this.$Config.serverUrl + "system/verification/code?key=" + this.ruleForm.key + "&t=" + this.$DateUtil.getTimeStamp()
             },
             /**

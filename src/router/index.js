@@ -20,6 +20,9 @@ import Dictionary from "../views/system/dictionary/dictionary"
 import DbLog from "../views/system/dbLog/dbLog"
 import Api from "../views/system/api/Api"
 
+//文件管理
+import File from '../views/file/file'
+
 
 const err401 = r =>
     require.ensure([], () => r(require("../views/error/err401.vue")), "home");
@@ -117,36 +120,6 @@ export default new VueRouter({
 
 export const asyncRouterMap = [
     {
-        path: "/account",
-        redirect: "system",
-        component: Home,
-        icon: "user-guanli",
-        name: "账号管理",
-        meta: {
-            authority: '/account'
-        },
-        children: [
-            {
-                path: "account",
-                component: Account,
-                name: "账号管理",
-                icon: "user-guanli",
-                meta: {
-                    authority: '/account/account'
-                }
-            },
-            {
-                path: "role",
-                component: Role,
-                name: "角色管理",
-                icon: "jiaose",
-                meta: {
-                    authority: '/account/role'
-                }
-            },
-        ]
-    },
-    {
         path: "/system",
         redirect: "system",
         component: Home,
@@ -199,6 +172,55 @@ export const asyncRouterMap = [
                 icon: "tiku",
                 meta: {
                     authority: '/system/api'
+                }
+            },
+        ]
+    },{
+        path: "/account",
+        redirect: "system",
+        component: Home,
+        icon: "user-guanli",
+        name: "账号管理",
+        meta: {
+            authority: '/account'
+        },
+        children: [
+            {
+                path: "account",
+                component: Account,
+                name: "账号管理",
+                icon: "user-guanli",
+                meta: {
+                    authority: '/account/account'
+                }
+            },
+            {
+                path: "role",
+                component: Role,
+                name: "角色管理",
+                icon: "jiaose",
+                meta: {
+                    authority: '/account/role'
+                }
+            },
+        ]
+    },{
+        path: "/file",
+        redirect: "file",
+        component: Home,
+        icon: "tongyong",
+        name: "文件管理",
+        meta: {
+            authority: '/file'
+        },
+        children: [
+            {
+                path: "file",
+                component: File,
+                name: "文件管理",
+                icon: "shezhi1",
+                meta: {
+                    authority: '/file/file'
                 }
             },
         ]

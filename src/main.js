@@ -48,6 +48,7 @@ import { isPC } from "./utils/system/SystemUtil"
 //Confirm
 import { Confirm } from "./utils/confirm/ConfirmUtil"
 
+
 // 注册全局组件（register global）
 Vue.component("icon-svg", IconSvg);
 Vue.prototype.$Config = config;
@@ -63,6 +64,11 @@ Vue.prototype.$TableRowClassName = tableRowClassName;
 Vue.prototype.$IsPC = isPC;
 Vue.prototype.$confirm = Confirm;
 
+
+//注册全局插件
+// import ElUpload from "./components/File/ElUpload"
+
+// Vue.component('ElUpload', ElUpload);
 
 
 

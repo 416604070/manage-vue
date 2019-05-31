@@ -10,6 +10,7 @@
         "test:unit": "vue-cli-service test:unit"
     },
     "dependencies": {
+        "ali-oss": "^6.1.1",
         "axios": "^0.18.0",
         "babel-polyfill": "^6.26.0",
         "crypto-js": "^3.1.9-1",
@@ -17,7 +18,7 @@
         "js-cookie": "^2.2.0",
         "mockjs": "^1.0.1-beta3",
         "nprogress": "^0.2.0",
-        "vue": "^2.5.16",
+        "vue": "^2.6.10",
         "vue-router": "^3.0.1",
         "vuedraggable": "^2.17.0",
         "vuex": "^3.0.1"
@@ -35,7 +36,7 @@
         "less-loader": "^5.0.0",
         "node-sass": "^4.9.0",
         "sass-loader": "^7.0.1",
-        "vue-template-compiler": "^2.5.16"
+        "vue-template-compiler": "^2.6.10"
     },
     "browserslist": [
         "> 1%",
